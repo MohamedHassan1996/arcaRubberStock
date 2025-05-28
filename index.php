@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-$addPremssions = true;
+$addPremssions = false;
 
 if ($addPremssions) {
     // Step 1: Insert all permissions
