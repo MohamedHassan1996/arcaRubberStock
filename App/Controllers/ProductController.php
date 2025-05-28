@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Helpers\ApiResponse;
+use Core\Auth;
 use Core\Contracts\HasMiddleware;
 use Core\Controller;
 use Core\DB;
@@ -50,7 +51,7 @@ class ProductController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            new Middleware('permission:all_product', ['index']),
+            new Middleware('permission:all_products', ['index']),
             new Middleware('permission:store_product', ['store']),
             new Middleware('permission:show_product', ['show']),
             new Middleware('permission:update_product', ['update']),
@@ -60,6 +61,8 @@ class ProductController extends Controller implements HasMiddleware
 
     public function index()
     {
+        $auth = Auth::user();
+        //$auth->role['name']
         $data = request();
         $pageSize = (int) $data['pageSize'];
         $page = (int) $data['page'] ?? 1;
@@ -75,6 +78,20 @@ class ProductController extends Controller implements HasMiddleware
         $prductsData = [];
 
         foreach ($products as $product) {
+
+            $productRole = DB::raw(
+                "SELECT role_id, period_id, quantity
+                FROM role_product
+                WHERE deleted_at IS NULL AND product_id = ? AND role_id = ?", [
+                    $product['productId'],
+                    $auth->role['id']
+                ]
+            );
+
+            if(empty($productRole)) {
+                continue;
+            }
+
             // Step 1: Get product codes
             $productCodes = DB::select(
                 "SELECT id AS productCodeId

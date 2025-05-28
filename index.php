@@ -1,10 +1,134 @@
 <?php
 
+use Core\DB;
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Load .env
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
+
+header("Access-Control-Allow-Origin: *"); // You can restrict this to a specific domain
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// Handle preflight request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+$addPremssions = true;
+
+if ($addPremssions) {
+    // Step 1: Insert all permissions
+
+    try {
+        DB::beginTransaction();
+        $allPermissions = [
+        'all_products',
+        'store_product',
+        'show_product',
+        'update_product',
+        'destroy_product',
+
+        'all_product_codes',
+        'store_product_code',
+        'show_product_code',
+        'update_product_code',
+        'destroy_product_code',
+
+        'all_role_poducts',
+        'store_role_product',
+        'show_role_product',
+        'update_role_product',
+        'destroy_role_product',
+
+        'all_operator_orders',
+        'store_operator_order',
+        'show_operator_order',
+        'update_operator_order',
+        'destroy_operator_order',
+
+        'all_stocks',
+        'show_stock',
+        'update_stock',
+
+        'all_parameters',
+        'store_parameter',
+        'show_parameter',
+        'update_parameter',
+        'destroy_parameter'
+    ];
+
+    foreach ($allPermissions as $permission) {
+        DB::raw("INSERT INTO permissions (`name`) VALUES (?)", [$permission]);
+    }
+
+    // Step 2: Insert all roles
+    $allRoles = ['admin', 'operator', 'supervisor'];
+    foreach ($allRoles as $role) {
+        DB::raw("INSERT INTO roles (`name`) VALUES (?)", [$role]);
+    }
+
+    // Step 3: Fetch role IDs
+    $adminRoleId = DB::raw("SELECT id FROM roles WHERE name = ?", ['admin'])[0]['id'];
+    $operatorRoleId = DB::raw("SELECT id FROM roles WHERE name = ?", ['operator'])[0]['id'];
+    $supervisorRoleId = DB::raw("SELECT id FROM roles WHERE name = ?", ['supervisor'])[0]['id'];
+
+    // Step 4: Fetch all permissions (id, name)
+    $permissions = DB::raw("SELECT id, name FROM permissions");
+
+    // Build map: permission name => ID
+    $permMap = [];
+    foreach ($permissions as $perm) {
+        $permMap[$perm['name']] = $perm['id'];
+    }
+
+    // Step 5: Assign all permissions to admin
+    foreach ($permMap as $permissionId) {
+        DB::raw("INSERT INTO role_has_permissions (role_id, permission_id) VALUES (?, ?)", [
+            $adminRoleId, $permissionId
+        ]);
+    }
+
+    // Step 6: Assign specific permissions to supervisor
+    $supervisorPerms = [
+        'all_operator_orders',
+        'store_operator_order',
+        'show_operator_order',
+        'update_operator_order',
+        'all_products'
+    ];
+
+    foreach ($supervisorPerms as $permName) {
+        if (isset($permMap[$permName])) {
+            DB::raw("INSERT INTO role_has_permissions (role_id, permission_id) VALUES (?, ?)", [
+                $supervisorRoleId, $permMap[$permName]
+            ]);
+        }
+    }
+
+    // Step 7: Assign specific permissions to operator
+    $operatorPerms = [
+        'store_operator_order',
+        'all_products'
+    ];
+
+    foreach ($operatorPerms as $permName) {
+        if (isset($permMap[$permName])) {
+            DB::raw("INSERT INTO role_has_permissions (role_id, permission_id) VALUES (?, ?)", [
+                $operatorRoleId, $permMap[$permName]
+            ]);
+        }
+    }
+
+    DB::commit();
+    } catch (\Throwable $th) {
+        DB::rollBack();
+        throw $th;
+    }
+}
 
 $router = new Core\Router();
 

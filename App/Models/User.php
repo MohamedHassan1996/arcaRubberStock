@@ -14,7 +14,7 @@ class User extends Model {
 
     public function getRoleAttribute(){
         $roleName = DB::select("
-            SELECT roles.name
+            SELECT roles.name, roles.id
             FROM model_has_role
             JOIN roles ON model_has_role.role_id = roles.id
             WHERE model_has_role.model_id = ? LIMIT 1
