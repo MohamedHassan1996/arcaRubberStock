@@ -35,5 +35,28 @@ $router->post('api/operator-orders', 'OperatorOrderController@store');
 $router->put('api/operator-orders', 'OperatorOrderController@update');
 $router->delete('api/operator-orders', 'OperatorOrderController@destroy');
 
+// stocks
+$router->get('api/stocks', 'StockController@index');
+$router->get('api/stocks/{id}', 'StockController@show');
+$router->put('api/stocks', 'StockController@update');
+
+
+// roleProduct
+$router->get('api/role-products', 'RoleProductController@index');
+$router->get('api/role-products/{id}', 'RoleProductController@show');
+$router->post('api/role-products', 'RoleProductController@store');
+$router->put('api/role-products', 'RoleProductController@update');
+$router->delete('api/role-products/{id}', 'RoleProductController@destroy');
+
+// parameter value
+$router->get('api/parameters', 'ParameterValueController@index');
+$router->get('api/parameters/{id}', 'ParameterValueController@show');
+$router->post('api/parameters', 'ParameterValueController@store');
+$router->put('api/parameters', 'ParameterValueController@update');
+$router->delete('api/parameters/{id}', 'ParameterValueController@destroy');
+
+
+
+
 
 $router->dispatch($_SERVER['REQUEST_URI']);

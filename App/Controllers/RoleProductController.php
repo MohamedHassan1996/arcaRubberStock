@@ -12,7 +12,7 @@ use Core\Middleware;
  *
  * PHP version 5.4
  */
-class ProductCodeController extends Controller implements HasMiddleware
+class RoleProductController extends Controller implements HasMiddleware
 {
 
     public function __construct()
@@ -56,17 +56,16 @@ class ProductCodeController extends Controller implements HasMiddleware
 
     public function index()
     {
-        $sql = "SELECT id AS productCodeId, `code` 
-                FROM product_codes 
-                WHERE deleted_at IS NULL";
+        $sql = "SELECT role_product.id AS roleProductId, roles.name AS roleName, parameter_values.parameter_value AS periodName, role_product.quantity
+                FROM role_product 
+                LEFT JOIN products ON role_product.product_id = products.id
+                LEFT JOIN roles ON role_product.role_id = roles.id
+                LEFT JOIN parameter_values ON role_product.period_id = parameter_values.id
+                WHERE role_product.deleted_at IS NULL";
 
-        $productCodes = DB::raw($sql);
+        $roleProduct = DB::raw($sql);
 
-        $responseData = [
-            'productCodes' => $productCodes,
-        ];
-
-        return ApiResponse::success($responseData);
+        return ApiResponse::success($roleProduct);
     }
     public function store()
     {
@@ -76,7 +75,7 @@ class ProductCodeController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
-            $productCode = DB::raw("INSERT INTO `product_codes` (`code`, `description`, `product_id`) VALUES (?, ?, ?)", [$data['code'], $data['description'], $data['productId']], false);
+            DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$data['productId'], $data['roleId'], $data['periodId'], $data['quantity']]);
 
             DB::commit();
 
@@ -91,15 +90,9 @@ class ProductCodeController extends Controller implements HasMiddleware
 
     public function show($id){
 
-        $productData = DB::raw("SELECT * FROM product_codes WHERE id = ? AND deleted_at IS NULL", [$id]);
+        $roleProduct = DB::raw("SELECT id AS roleProductId, product_id AS productId, role_id AS roleId, period_id AS periodId, quantity FROM role_product WHERE id = ? AND deleted_at IS NULL", [$id]);
 
-        $responseData = [
-            'productCodeId' => $id,
-            'code' => $productData[0]['code'],
-            'productId' =>  $productData[0]['product_id'],
-        ];
-
-        return ApiResponse::success($responseData);
+        return ApiResponse::success($roleProduct);
 
     }
 
@@ -112,11 +105,11 @@ class ProductCodeController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
-            $productCode = DB::raw("UPDATE `product_codes` SET `code` = ?, `description` = ? WHERE id = ?", [$data['code'], $data['description'], $data['productCodeId']]);
+            $roleProduct = DB::raw("UPDATE `role_product` SET `quantity` = ?, `role_id` = ?, `period_id` = ? WHERE id = ?", [$data['quantity'], $data['roleId'], $data['periodId'], $data['roleProductId']]);
 
             DB::commit();
 
-            return ApiResponse::success('Product Code updated successfully');
+            return ApiResponse::success('Product updated successfully');
 
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -129,15 +122,15 @@ class ProductCodeController extends Controller implements HasMiddleware
     {
         try {
             DB::beginTransaction();
-            DB::raw("UPDATE `product_codes` SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
-            DB::raw("UPDATE `in_stocks` SET deleted_at = ? WHERE product_code_id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
-            DB::raw("UPDATE `stocks` SET deleted_at = ? WHERE product_code_id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
+            
+            DB::raw("UPDATE `role_product` SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
+
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
             throw $th;
         }
-        return ApiResponse::success('Product Code deleted successfully');
+        return ApiResponse::success('Order deleted successfully');
     }
 
 }

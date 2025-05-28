@@ -15,7 +15,7 @@ class JWT
     // Initialize configuration
     public static function init(): void
     {
-        $config = require __DIR__ . '/../config/jwt.php';
+        $config = require __DIR__ . '/../Config/jwt.php';
 
         self::$secret = $config['secret'];
         self::$algo   = $config['algo'];

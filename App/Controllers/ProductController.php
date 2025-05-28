@@ -2,7 +2,6 @@
 namespace App\Controllers;
 
 use App\Helpers\ApiResponse;
-use Core\Auth;
 use Core\Contracts\HasMiddleware;
 use Core\Controller;
 use Core\DB;
@@ -62,17 +61,56 @@ class ProductController extends Controller implements HasMiddleware
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
 
-        $sql = "SELECT id AS productId, `name` 
+        $sql = "SELECT id AS productId, `name`, `description`
                 FROM products 
                 WHERE deleted_at IS NULL 
                 LIMIT $pageSize OFFSET $offset";
 
         $products = DB::raw($sql);
 
+        $prductsData = [];
+
+        foreach ($products as $product) {
+            // Step 1: Get product codes
+            $productCodes = DB::select(
+                "SELECT id AS productCodeId
+                FROM product_codes 
+                WHERE deleted_at IS NULL AND product_id = ?",
+                [$product['productId']]
+            );
+
+            // Step 2: Extract IDs as array
+            $productCodeIds = array_map(fn($row) => is_array($row) ? $row['productCodeId'] : $row->productCodeId, $productCodes);
+
+            if (empty($productCodeIds)) {
+                $productStockSum = 0;
+            } else {
+                // Step 3: Build placeholders
+                $placeholders = implode(',', array_fill(0, count($productCodeIds), '?'));
+
+                // Step 4: Use DB::select() directly (not DB::raw())
+                $sql = "SELECT SUM(quantity) AS total
+                        FROM stocks
+                        WHERE deleted_at IS NULL
+                        AND product_code_id IN ($placeholders)";
+            
+
+                $result = DB::select($sql, $productCodeIds);
+                $productStockSum = $result[0]['total'] ?? 0;
+            }
+
+            $prductsData[] = [
+                'productId' => $product['productId'],
+                'name' => $product['name'],
+                'description' => $product['description'] ?? '',
+                'totalStock' => (int)$productStockSum
+            ];
+        }
+
         $productsCount = DB::raw("SELECT count(*) as total FROM products WHERE deleted_at IS NULL");
 
         $responseData = [
-            'products' => $products,
+            'products' => $prductsData,
             'pagination' => [
                 'page' => $page,
                 'pageSize' => $pageSize,
@@ -91,16 +129,19 @@ class ProductController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
-            $product = DB::raw("INSERT INTO `products` (`name`, `description`,`min_quantity`) VALUES (?, ?, ?)", [$data['name'], $data['description'], $data['minQuantity']], false);
+            $product = DB::raw("INSERT INTO `products` (`name`, `description`, `min_quantity`) VALUES (?, ?, ?)", [$data['name'], $data['description'], $data['minQuantity']], false);
 
-            foreach ($data['productCodes'] as $key => $productCodesData) {
+            foreach ($data['productCodes'] as $key => $productCodeData) {
 
-                $productCode = DB::raw("INSERT INTO `product_codes` (`product_id`, `code`) VALUES (?, ?)", [$product, $productCodesData['code']], false);
-
-                $inStock = DB::raw("INSERT INTO `in_stocks` ('invoice_number', `product_code_id`, `quantity`) VALUES (?, ?, ?)", [$productCodesData['invoiceNumber'], $productCode, $productCodesData['quantity']]);
-
-                $stock = DB::raw("INSERT INTO `stocks` (`product_code_id`, `quantity`) VALUES (?, ?)", [$productCode, $productCodesData['quantity']]);
+                DB::raw("INSERT INTO `product_codes` (`product_id`, `code`) VALUES (?, ?)", [$product, $productCodeData['code']], false);
             }
+
+            foreach ($data['roleProducts'] as $key => $roleProduct) {
+
+                DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$product, $roleProduct['roleId'], $roleProduct['periodId'], $roleProduct['quantity']]);
+
+            }
+
 
             DB::commit();
 
@@ -141,38 +182,6 @@ class ProductController extends Controller implements HasMiddleware
             DB::beginTransaction();
 
             $product = DB::raw("UPDATE `products` SET `name` = ?, `description` = ?, `min_quantity` = ? WHERE id = ?", [$data['name'], $data['description'], $data['minQuantity'], $data['productId']]);
-
-            /*foreach ($data['productCodes'] as $key => $productCodesData) {
-                if($productCodesData['actionStatus'] == "CREATE"){
-                    $productCode = DB::raw("INSERT INTO `product_codes` (`product_id`, `code`) VALUES (?, ?)", [$product, $productCodesData['code']], false);
-
-                    $inStock = DB::raw("INSERT INTO `in_stocks` ('invoice_number', `product_code_id`, `quantity`) VALUES (?, ?, ?)", [$productCodesData['invoiceNumber'], $productCode, $productCodesData['quantity']]);
-
-                    $stock = DB::raw("INSERT INTO `stocks` (`product_code_id`, `quantity`) VALUES (?, ?)", [$productCode, $productCodesData['quantity']]);
-
-                }elseif($productCodesData['actionStatus'] == "UPDATE"){
-
-                    $productCode = DB::raw("UPDATE `product_codes` SET code = ? WHERE id = ?", [$productCodesData['code'], $productCodesData['productCodeId']]);
-
-                    $inStockOldQuantity = DB::raw("SELECT quantity FROM `in_stocks` WHERE id = ?", [$productCodesData['inStockId']])[0]['quantity'];
-                    
-                    $inStock = DB::raw("UPDATE `in_stocks` SET invoice_number = ?, product_code_id = ?, `quantity` = ? WHERE id = ?", [$productCodesData['invoiceNumber'], $productCodesData['productCodeId'], $productCodesData['quantity'],$productCodesData['inStockId']]);
-
-                    $Stock = DB::raw("UPDATE `stocks` SET quantity = quantity - ? + ? WHERE product_code_id = ?", [
-                        $inStockOldQuantity,
-                        $productCodesData['quantity'],
-                        $productCodesData['productCodeId']
-                    ]);
-
-
-                }elseif($productCodesData['actionStatus'] == "DELETE"){
-                    $inStock = DB::raw("DELETE FROM `in_stocks` WHERE product_code_id = ?", [$productCodesData['productCodeId']]);
-
-                    $stock = DB::raw("DELETE FROM `stocks` WHERE product_code_id = ?", [$productCodesData['productCodeId']]);
-
-                    $productCode = DB::raw("DELETE FROM `product_codes` WHERE id = ?", [$productCodesData['productCodeId']]);
-                }
-            }*/
 
             DB::commit();
 
