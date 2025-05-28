@@ -50,7 +50,11 @@ class ProductController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            //new Middleware('permission:store_operatotr_order', ['index'])
+            new Middleware('permission:all_product', ['index']),
+            new Middleware('permission:store_product', ['store']),
+            new Middleware('permission:show_product', ['show']),
+            new Middleware('permission:update_product', ['update']),
+            new Middleware('permission:destroy_product', ['destroy']),
         ];
     }
 
