@@ -59,8 +59,8 @@ class ProductCodeController extends Controller implements HasMiddleware
         $data = request();
         $sql = "SELECT id AS productCodeId, `code` 
                 FROM product_codes
-                WhERE product_id = ? AND
-                WHERE deleted_at IS NULL";
+                WHERE product_id = ? AND
+                deleted_at IS NULL";
 
         $productCodes = DB::raw($sql, [$data['productId']]);
 
