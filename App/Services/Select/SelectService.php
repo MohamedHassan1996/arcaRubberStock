@@ -53,6 +53,7 @@ class SelectService
     {
         $selectServiceMap = [
             'parameters' => ['getAllParameters', ParameterSelectService::class],
+            'roles' => ['getAllRoles', RoleSelectService::class],
         ];
 
         $paramValue = null; // Initialize paramValue
