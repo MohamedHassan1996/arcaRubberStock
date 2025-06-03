@@ -105,11 +105,11 @@ class ParameterValueController extends Controller implements HasMiddleware
     public function show($id){
 
         $sql = "SELECT id AS parameterValueId, parameter_value AS parameterValue, parameter_id AS parameterId, parameter_order as parameterOrder, `description` FROM parameter_values
-                WHERE parameter_values.deleted_at IS NULL AND parameter_values.id = ?";
+                WHERE parameter_values.deleted_at IS NULL AND parameter_values.id = ? LIMIT 1";
 
         $parameterValuesData = DB::raw($sql, [$id]);
 
-        return ApiResponse::success($parameterValuesData);
+        return ApiResponse::success($parameterValuesData[0]);
 
     }
 
