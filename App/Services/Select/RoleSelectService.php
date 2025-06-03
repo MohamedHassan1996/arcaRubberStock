@@ -1,14 +1,13 @@
 <?php
 
 namespace App\Services\Select;
-
-use Spatie\Permission\Models\Role;
+use Core\DB;
 
 class RoleSelectService
 {
     public function getAllRoles()
     {
-        return Role::whereNot('name', 'مدير عام')->get(['id as value', 'name as label']);
+        return DB::raw("SELECT id AS value, name as label FROM roles");
     }
 }
 
