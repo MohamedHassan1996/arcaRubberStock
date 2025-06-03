@@ -113,7 +113,7 @@ class ProductCodeController extends Controller implements HasMiddleware
     public function update()
     {
 
-        error_reporting(0);
+        //error_reporting(0);
 
         try {
 
