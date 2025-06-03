@@ -56,7 +56,7 @@ class RoleProductController extends Controller implements HasMiddleware
 
     public function index()
     {
-        $sql = "SELECT role_product.id AS roleProductId, roles.id AS roleId, roles.name AS roleName, parameter_values.parameter_value AS periodName, role_product.quantity
+        $sql = "SELECT role_product.id AS roleProductId, roles.id AS roleId, roles.name AS roleName, parameter_values.id AS periodId, parameter_values.parameter_value AS periodName, role_product.quantity
                 FROM role_product 
                 LEFT JOIN products ON role_product.product_id = products.id
                 LEFT JOIN roles ON role_product.role_id = roles.id
