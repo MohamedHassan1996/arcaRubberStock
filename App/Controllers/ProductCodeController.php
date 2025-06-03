@@ -121,6 +121,10 @@ class ProductCodeController extends Controller implements HasMiddleware
 
             $data = request();
 
+            print_r("<pre>");
+            print_r($data);
+                        print_r("<pre>");
+
             $productCode = DB::raw("UPDATE `product_codes` SET `code` = ? WHERE id = ?", [$data['code'], $data['productCodeId']]);
 
             DB::commit();
