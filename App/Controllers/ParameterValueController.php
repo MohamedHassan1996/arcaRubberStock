@@ -61,7 +61,7 @@ class ParameterValueController extends Controller implements HasMiddleware
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
 
-        $sql = "SELECT id AS parameterValueId, parameter_value AS parameterValue FROM parameter_values
+        $sql = "SELECT id AS parameterValueId, parameter_value AS parameterValue, `description` FROM parameter_values
                 WHERE parameter_values.deleted_at IS NULL AND parameter_values.parameter_id = ?
                 LIMIT $pageSize OFFSET $offset";
 
