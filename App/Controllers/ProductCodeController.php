@@ -78,8 +78,6 @@ class ProductCodeController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
-            debug($data);
-
             $productCode = DB::raw("INSERT INTO `product_codes` (`code`, `description`, `product_id`) VALUES (?, ?, ?)", [$data['code'], $data['description'], $data['productId']], false);
 
             DB::commit();
