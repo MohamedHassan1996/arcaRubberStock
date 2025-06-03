@@ -63,7 +63,7 @@ class RoleProductController extends Controller implements HasMiddleware
                 LEFT JOIN parameter_values ON role_product.period_id = parameter_values.id
                 WHERE product_id = ? AND role_product.deleted_at IS NULL";
 
-        $roleProduct = DB::raw($sql);
+        $roleProduct = DB::raw($sql, [request()['productId']]);
 
         return ApiResponse::success($roleProduct);
     }
