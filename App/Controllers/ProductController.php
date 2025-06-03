@@ -114,8 +114,6 @@ class ProductController extends Controller implements HasMiddleware
                         FROM stocks
                         WHERE deleted_at IS NULL
                         AND product_code_id IN ($placeholders)";
-            
-
                 $result = DB::select($sql, $productCodeIds);
                 $productStockSum = $result[0]['total'] ?? 0;
             }

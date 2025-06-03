@@ -56,11 +56,13 @@ class ProductCodeController extends Controller implements HasMiddleware
 
     public function index()
     {
+        $data = request();
         $sql = "SELECT id AS productCodeId, `code` 
-                FROM product_codes 
+                FROM product_codes
+                WhERE product_id = ? AND
                 WHERE deleted_at IS NULL";
 
-        $productCodes = DB::raw($sql);
+        $productCodes = DB::raw($sql, [$data['productId']]);
 
         $responseData = [
             'productCodes' => $productCodes,
