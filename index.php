@@ -180,6 +180,7 @@ $router->put('api/parameters', 'ParameterValueController@update');
 $router->delete('api/parameters/{id}', 'ParameterValueController@destroy');
 
 
+$router->get('api/selects', 'SelectController@index');
 
 
 
