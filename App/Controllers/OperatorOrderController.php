@@ -118,7 +118,17 @@ class OperatorOrderController extends Controller implements HasMiddleware
 
         $orderData = DB::raw("SELECT * FROM orders WHERE id = ?", [$id]);
 
-        $orderItemsData = DB::raw("SELECT id as orderItemId, product_code_id as productCodeId, quantity FROM order_items WHERE order_id = ?", [$id]);
+        $orderItemsData = DB::select(
+            "SELECT 
+                order_items.id AS orderItemId, 
+                order_items.product_code_id AS productCodeId, 
+                order_items.quantity, 
+                product_codes.code AS productCode
+            FROM order_items
+            JOIN product_codes ON order_items.product_code_id = product_codes.id
+            WHERE order_items.order_id = ?",
+            [$id]
+        );
 
         $orderResponse = [
             'orderId' => $id,
