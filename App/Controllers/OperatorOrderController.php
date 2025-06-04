@@ -130,12 +130,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
             [$id]
         );
 
-        $orderResponse = [
-            'orderId' => $id,
-            'orderNumber' => $orderData[0]['number'],
-            'status' => $orderData[0]['status'],
-            'orderItems' => $orderItemsData,
-        ];
+
 
         foreach ($orderItemsData as $key => $orderItemData) {
             $role = DB::raw("SELECT * FROM model_has_role WHERE model_id = ?", [$orderData[0]['user_id']]);
@@ -154,11 +149,17 @@ class OperatorOrderController extends Controller implements HasMiddleware
                 AND created_at >= NOW() - INTERVAL $days DAY
             ";
 
-
             $usedQuantity = DB::raw($sql, [$orderItemData['productCodeId']]);
             $orderItemsData[$key]['usedQuantity'] = $usedQuantity[0]['totalQuantity'] ?? 0;      
             $orderItemsData[$key]['maxQuantity'] = $roleProduct[0]['quantity'] ?? 0;      
         }
+
+        $orderResponse = [
+            'orderId' => $id,
+            'orderNumber' => $orderData[0]['number'],
+            'status' => $orderData[0]['status'],
+            'orderItems' => $orderItemsData,
+        ];
 
         return ApiResponse::success($orderResponse);
 
