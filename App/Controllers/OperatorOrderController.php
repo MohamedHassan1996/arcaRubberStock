@@ -160,8 +160,6 @@ class OperatorOrderController extends Controller implements HasMiddleware
             $orderItemsData[$key]['maxQuantity'] = $roleProduct[0]['quantity'] ?? 0;      
         }
 
-        debug($orderItemsData);
-
         return ApiResponse::success($orderResponse);
 
     }
