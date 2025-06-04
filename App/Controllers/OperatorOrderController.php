@@ -142,6 +142,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
             $productCode = DB::raw("SELECT * FROM product_codes WHERE id = ?", [$orderItemData['productCodeId']]);
             $roleProduct = DB::raw("SELECT * FROM role_product WHERE product_id = ? AND role_id = ?", [$productCode[0]['product_id'], $role[0]['id']]);
             $parameterValue = DB::raw("SELECT `description` FROM parameter_values WHERE id = ?", [$roleProduct[0]['period_id']]);
+            debug($parameterValue);
             $days = isset($parameterValue[0]) ? (int) $parameterValue[0]['description'] : 0;
 $sql = "
     SELECT SUM(quantity) AS totalQuantity
