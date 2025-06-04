@@ -120,7 +120,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
 
         $orderItemsData = DB::select(
             "SELECT 
-                order_items.id AS orderItemId, 
+                order_items.id AS orderItemId,
                 order_items.product_code_id AS productCodeId, 
                 order_items.quantity, 
                 product_codes.code AS productCode
@@ -136,6 +136,24 @@ class OperatorOrderController extends Controller implements HasMiddleware
             'status' => $orderData[0]['status'],
             'orderItems' => $orderItemsData,
         ];
+
+        foreach ($orderItemsData as $key => $orderItemData) {
+            $role = DB::raw("SELECT * FROM model_has_role WHERE model_id = ?", [$orderData[0]['user_id']]);
+            $productCode = DB::raw("SELECT * FROM product_codes WHERE id = ?", [$orderItemData['productCodeId']]);
+            $roleProduct = DB::raw("SELECT * FROM role_product WHERE product_id = ? AND role_id = ?", [$productCode[0]['product_id'], $role[0]['id']]);
+            $parameterValue = DB::raw("SELECT `description` FROM parameter_values WHERE id = ?", [$roleProduct[0]['period_id']]);
+            $days = isset($parameterValue[0]) ? (int) $parameterValue[0]['description'] : 0;
+$sql = "
+    SELECT SUM(quantity) AS totalQuantity
+    FROM order_items
+    WHERE product_code_id = ?
+      AND created_at >= NOW() - INTERVAL $days DAY
+";
+
+
+$usedQuantity = DB::raw($sql, [$orderItemData['productCodeId']]);
+$orderItemData['usedQuantity'] = $usedQuantity[0]->totalQuantity ?? 0;      
+        }
 
         return ApiResponse::success($orderResponse);
 
