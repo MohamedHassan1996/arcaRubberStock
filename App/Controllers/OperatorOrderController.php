@@ -156,8 +156,8 @@ $sql = "
 
 
 $usedQuantity = DB::raw($sql, [$orderItemData['productCodeId']]);
-$orderItemData['usedQuantity'] = $usedQuantity[0]['totalQuantity'] ?? 0;      
-$orderItemData['maxQuantity'] = $roleProduct[0]['quantity'] ?? 0;      
+$orderItemsData[0]['usedQuantity'] = $usedQuantity[0]['totalQuantity'] ?? 0;      
+$orderItemsData[0]['maxQuantity'] = $roleProduct[0]['quantity'] ?? 0;      
         }
 
         return ApiResponse::success($orderResponse);
