@@ -147,18 +147,20 @@ class OperatorOrderController extends Controller implements HasMiddleware
 
             $parameterValue = DB::raw("SELECT `description` FROM parameter_values WHERE id = ?", [$roleProduct[0]['period_id']]);
             $days = isset($parameterValue[0]) ? (int) $parameterValue[0]['description'] : 0;
-$sql = "
-    SELECT SUM(quantity) AS totalQuantity
-    FROM order_items
-    WHERE product_code_id = ?
-      AND created_at >= NOW() - INTERVAL $days DAY
-";
+            $sql = "
+                SELECT SUM(quantity) AS totalQuantity
+                FROM order_items
+                WHERE product_code_id = ?
+                AND created_at >= NOW() - INTERVAL $days DAY
+            ";
 
 
-$usedQuantity = DB::raw($sql, [$orderItemData['productCodeId']]);
-$orderItemsData[$key]['usedQuantity'] = $usedQuantity[0]['totalQuantity'] ?? 0;      
-$orderItemsData[$key]['maxQuantity'] = $roleProduct[0]['quantity'] ?? 0;      
+            $usedQuantity = DB::raw($sql, [$orderItemData['productCodeId']]);
+            $orderItemsData[$key]['usedQuantity'] = $usedQuantity[0]['totalQuantity'] ?? 0;      
+            $orderItemsData[$key]['maxQuantity'] = $roleProduct[0]['quantity'] ?? 0;      
         }
+
+        debug($orderItemsData);
 
         return ApiResponse::success($orderResponse);
 
