@@ -152,6 +152,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
             $usedQuantity = DB::raw($sql, [$orderItemData['productCodeId']]);
             $orderItemsData[$key]['usedQuantity'] = $usedQuantity[0]['totalQuantity'] ?? 0;      
             $orderItemsData[$key]['maxQuantity'] = $roleProduct[0]['quantity'] ?? 0;      
+            $orderItemsData[$key]['period'] = $parameterValue[0]['description'] ?? 0;      
         }
 
         $orderResponse = [
