@@ -144,7 +144,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
 
             $roleProduct = DB::raw("SELECT * FROM role_product WHERE product_id = ? AND role_id = ?", [$productCode[0]['product_id'], $role[0]['id']]);
 
-                        debug($productCode[0]['product_id']);
+                        debug($role);
 
 
             $parameterValue = DB::raw("SELECT `description` FROM parameter_values WHERE id = ?", [$roleProduct[0]['period_id']]);
