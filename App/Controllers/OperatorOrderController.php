@@ -100,7 +100,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
 
             foreach ($data['orderItems'] as $key => $orderItemData) {
 
-                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_code_id`, `quantity`) VALUES (?, ?, ?)", [$order, $orderItemData['productCodeId'], $orderItemData['quantity']]);
+                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_code_id`, `quantity`, `created_at`) VALUES (?, ?, ?, ?)", [$order, $orderItemData['productCodeId'], $orderItemData['quantity'], date('Y-m-d H:i:s')], false);
             }
 
             DB::commit();
@@ -173,7 +173,7 @@ $orderItemData['usedQuantity'] = $usedQuantity[0]->totalQuantity ?? 0;
             foreach ($data['orderItems'] as $key => $orderItemData) {
                 $orderItem = null;
                 if($orderItemData['actionStatus'] == "CREATE"){
-                    $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_code_id`, `quantity`) VALUES (?, ?, ?)", [$data['orderId'], $orderItemData['productCodeId'], $orderItemData['quantity']]);
+                    $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_code_id`, `quantity`, `created_at`) VALUES (?, ?, ?, ?)", [$data['orderId'], $orderItemData['productCodeId'], $orderItemData['quantity'], date('Y-m-d H:i:s')]);
                 }elseif($orderItemData['actionStatus'] == "UPDATE"){
                     $orderItem = DB::raw("UPDATE `order_items` SET product_code_id = ?, `quantity` = ? WHERE id = ?", [$orderItemData['productCodeId'], $orderItemData['quantity'], $orderItemData['orderItemId']]);
                 }elseif($orderItemData['actionStatus'] == "DELETE"){
