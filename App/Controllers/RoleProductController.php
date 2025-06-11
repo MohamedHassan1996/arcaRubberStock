@@ -59,7 +59,7 @@ class RoleProductController extends Controller implements HasMiddleware
     $sql = "SELECT 
                 role_product.id AS roleProductId, 
                 role_param.id AS roleId, 
-                role_param.name AS roleName, 
+                role_param.parameter_value AS roleName, 
                 period_param.id AS periodId, 
                 period_param.parameter_value AS periodName, 
                 role_product.quantity
