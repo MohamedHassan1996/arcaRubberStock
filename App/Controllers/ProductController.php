@@ -84,45 +84,29 @@ class ProductController extends Controller implements HasMiddleware
                 FROM role_product
                 WHERE deleted_at IS NULL AND product_id = ? AND role_id = ?", [
                     $product['productId'],
-                    $auth->role['id']
+                    $auth->product_role_id
                 ]
             );
 
-            if(empty($productRole)) {
+            if(empty($productRole) && $auth->product_role_id != null && $auth->role->name != 'admin') {
                 continue;
             }
 
             // Step 1: Get product codes
-            $productCodes = DB::select(
-                "SELECT id AS productCodeId
-                FROM product_codes 
-                WHERE deleted_at IS NULL AND product_id = ?",
-                [$product['productId']]
-            );
+            // $productCodes = DB::select(
+            //     "SELECT id AS productCodeId
+            //     FROM product_codes 
+            //     WHERE deleted_at IS NULL AND product_id = ?",
+            //     [$product['productId']]
+            // );
 
             // Step 2: Extract IDs as array
-            $productCodeIds = array_map(fn($row) => is_array($row) ? $row['productCodeId'] : $row->productCodeId, $productCodes);
-
-            if (empty($productCodeIds)) {
-                $productStockSum = 0;
-            } else {
-                // Step 3: Build placeholders
-                $placeholders = implode(',', array_fill(0, count($productCodeIds), '?'));
-
-                // Step 4: Use DB::select() directly (not DB::raw())
-                $sql = "SELECT SUM(quantity) AS total
-                        FROM stocks
-                        WHERE deleted_at IS NULL
-                        AND product_code_id IN ($placeholders)";
-                $result = DB::select($sql, $productCodeIds);
-                $productStockSum = $result[0]['total'] ?? 0;
-            }
+            // $productCodeIds = array_map(fn($row) => is_array($row) ? $row['productCodeId'] : $row->productCodeId, $productCodes);
 
             $prductsData[] = [
                 'productId' => $product['productId'],
                 'name' => $product['name'],
                 'description' => $product['description'] ?? '',
-                'totalStock' => (int)$productStockSum
             ];
         }
 
