@@ -219,7 +219,7 @@ class UserController extends Controller implements HasMiddleware
             DB::rollBack();
             throw $th;
         }
-        return ApiResponse::success('Order deleted successfully');
+        return ApiResponse::success('User deleted successfully');
     }
 
 }
