@@ -55,18 +55,26 @@ class RoleProductController extends Controller implements HasMiddleware
     }
 
     public function index()
-    {
-        $sql = "SELECT role_product.id AS roleProductId, roles.id AS roleId, roles.name AS roleName, parameter_values.id AS periodId, parameter_values.parameter_value AS periodName, role_product.quantity
-                FROM role_product 
-                LEFT JOIN products ON role_product.product_id = products.id
-                LEFT JOIN roles ON role_product.role_id = roles.id
-                LEFT JOIN parameter_values ON role_product.period_id = parameter_values.id
-                WHERE product_id = ? AND role_product.deleted_at IS NULL";
+{
+    $sql = "SELECT 
+                role_product.id AS roleProductId, 
+                role_param.id AS roleId, 
+                role_param.name AS roleName, 
+                period_param.id AS periodId, 
+                period_param.parameter_value AS periodName, 
+                role_product.quantity
+            FROM role_product 
+            LEFT JOIN products ON role_product.product_id = products.id
+            LEFT JOIN parameter_values AS role_param ON role_product.role_id = role_param.id
+            LEFT JOIN parameter_values AS period_param ON role_product.period_id = period_param.id
+            WHERE role_product.product_id = ? 
+              AND role_product.deleted_at IS NULL";
 
-        $roleProduct = DB::raw($sql, [request()['productId']]);
+    $roleProduct = DB::raw($sql, [request()['productId']]);
 
-        return ApiResponse::success($roleProduct);
-    }
+    return ApiResponse::success($roleProduct);
+}
+
     public function store()
     {
 
