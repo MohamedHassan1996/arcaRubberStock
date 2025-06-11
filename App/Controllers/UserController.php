@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 
+use App\Enums\HttpStatusCode;
 use App\Helpers\ApiResponse;
 use Core\Auth;
 use Core\Contracts\HasMiddleware;
@@ -100,6 +101,12 @@ class UserController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
+            $user = DB::raw("SELECT * FROM users WHERE username = ? AND deleted_at IS NULL", [$data['username']]);
+
+            if ($user) {
+                return ApiResponse::error('User already exists');
+            }
+
             $params = [$data['username'], Hash::make($data['password'])];
 
             $sql = "INSERT INTO `users` (`username`, `password`";
@@ -158,6 +165,11 @@ class UserController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
+            // Check if username exists
+            $existingUser = DB::raw("SELECT * FROM users WHERE username = ? AND id != ? AND deleted_at IS NULL", [$data['username'], $data['userId']]);
+            if ($existingUser) {
+                return ApiResponse::error('Username already exists');
+            }
             // $user = DB::raw("UPDATE `users` SET username = ?, password = ?, product_role_id = ? WHERE id = ? AND deleted_at IS NULL", [$data['name'], $data['password'], $data['productRoleId'], $data['userId']], false);
 
             $query = "UPDATE `users` SET username = ?";
