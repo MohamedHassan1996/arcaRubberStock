@@ -68,6 +68,7 @@ class AuthController extends Controller implements HasMiddleware
             'sub' => $user->id,
             'email' => $user->username
         ]);
+
         return ApiResponse::success([
             'tokenDetails' => [
                 'token' => $token,

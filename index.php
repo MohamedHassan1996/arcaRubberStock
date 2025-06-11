@@ -26,6 +26,12 @@ if ($addPremssions) {
     try {
         DB::beginTransaction();
         $allPermissions = [
+        'all_users',
+        'store_user',
+        'show_user',
+        'update_user',
+        'destroy_user',
+
         'all_products',
         'store_product',
         'show_product',
@@ -137,6 +143,12 @@ $router = new Core\Router();
 // Auth
 $router->post('api/auth/login', 'AuthController@login');
 $router->post('api/auth/logout', 'AuthController@logout');
+
+$router->get('api/users', 'UserController@index');
+$router->get('api/users/{id}', 'UserController@show');
+$router->post('api/users', 'UserController@store');
+$router->put('api/users', 'UserController@update');
+$router->delete('api/users/{id}', 'UserController@destroy');
 
 // Products
 $router->get('api/products', 'ProductController@index');

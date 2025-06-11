@@ -10,6 +10,7 @@ class User extends Model {
     protected static $fillable = [
         'username',
         'password',
+        'product_role_id'
     ];
 
     public function getRoleAttribute(){
