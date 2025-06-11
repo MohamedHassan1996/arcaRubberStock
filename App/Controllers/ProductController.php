@@ -88,7 +88,7 @@ class ProductController extends Controller implements HasMiddleware
                 ]
             );
 
-            if(empty($productRole) && $auth->product_role_id != null && $auth->role->name != 'admin') {
+            if(empty($productRole) && $auth->product_role_id != null && $auth->role['name'] != 'admin') {
                 continue;
             }
 

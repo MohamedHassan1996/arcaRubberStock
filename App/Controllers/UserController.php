@@ -1,7 +1,6 @@
 <?php
 namespace App\Controllers;
 
-use App\Enums\HttpStatusCode;
 use App\Helpers\ApiResponse;
 use Core\Auth;
 use Core\Contracts\HasMiddleware;
