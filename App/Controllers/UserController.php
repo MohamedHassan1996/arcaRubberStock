@@ -212,7 +212,7 @@ class UserController extends Controller implements HasMiddleware
         try {
             DB::beginTransaction();
             $user = DB::raw("UPDATE `users` SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL", [$id], false);
-            $userRole = DB::raw("DELETE `model_has_role` WHERE model_id = ?", [$id], false);
+            $userRole = DB::raw("DELETE FROM `model_has_role` WHERE model_id = ?", [$id], false);
 
             DB::commit();
         } catch (\Throwable $th) {
