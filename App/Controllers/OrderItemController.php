@@ -175,11 +175,12 @@ class OrderItemController extends Controller implements HasMiddleware
 
         $auth = Auth::user();
 
-        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, orders.id AS orderId, order_items.product_id AS productId,
-                    orders.number AS orderNumber, users.username
+        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_itmes.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
+                    orders.number AS orderNumber, users.username, products.name AS productName
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
                 JOIN users ON orders.user_id = users.id
+                JOIN products ON order_items.product_id = products.id
                 WHERE order_items.deleted_at IS NULL AND orders.deleted_at IS NULL
                 AND order_items.id = ?";
 
@@ -217,10 +218,13 @@ class OrderItemController extends Controller implements HasMiddleware
 
             $orderItemsData = [
                 'orderItemId' => $orderItem['orderItemId'],
+                'productId' => $orderItem['productId'],
+                'productName' => $orderItem['productName'],
                 'quantity' => $orderItem['quantity'],
                 'orderId' => $orderItem['orderId'],
                 'orderNumber' => $orderItem['orderNumber'],
                 'username' => $orderItem['username'],
+                'orderItemStatus' => $orderItem['orderItemStatus'],
                 'maxQuantity' => $maxTimesToOrderInPeriod[0]['quantity'] ?? '-',
                 'previousQuantity' => $previousOrderQuantity[0]['totalQuantity'] ?? 0
             ];
