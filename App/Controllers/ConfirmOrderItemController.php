@@ -81,10 +81,11 @@ class ConfirmOrderItemController extends Controller implements HasMiddleware
                 $data['orderItemId']
             ]);
 
-            DB::raw("INERT INTO out_stocks (order_id, order_item_id, quantity) VALUES (?, ?, ?)", [
+            DB::raw("INERT INTO out_stocks (order_id, order_item_id, quantity, created_at) VALUES (?, ?, ?, ?)", [
                 $orderItem[0]['order_id'],
                 $data['orderItemId'],
-                $data['quantity']
+                $data['quantity'],
+                date('Y-m-d H:i:s')
             ]);
 
             
