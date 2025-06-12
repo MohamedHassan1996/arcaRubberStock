@@ -82,17 +82,4 @@ class OrderItemStatusController extends Controller implements HasMiddleware
         
     }
 
-    public function destroy($id)
-    {
-        try {
-            DB::beginTransaction();
-            DB::raw("UPDATE `order_items` SET deleted_at = ? WHERE id = ?", [date('Y-m-d H:i:s'), $id]);
-            DB::commit();
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            throw $th;
-        }
-        return ApiResponse::success('Order deleted successfully');
-    }
-
 }
