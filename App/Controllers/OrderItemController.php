@@ -239,9 +239,14 @@ class OrderItemController extends Controller implements HasMiddleware
             $data = request();
 
             DB::beginTransaction();
+            
+            $orderItem = DB::raw("UPDATE `order_items` SET `quantity` = ?, `status` = ? WHERE id = ?", [
+                $data['quantity'],
+                $data['status'],
+                $data['orderItemId']
+            ]);
 
             
-
             DB::commit();
 
             return ApiResponse::success('Order updated successfully');

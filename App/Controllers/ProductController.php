@@ -62,26 +62,28 @@ class ProductController extends Controller implements HasMiddleware
     public function index()
     {
         $auth = Auth::user();
-        //$auth->role['name']
         $data = request();
         $pageSize = (int) $data['pageSize'];
-        $page = (int) $data['page'] ?? 1;
+        $page = (int) ($data['page'] ?? 1);
         $offset = ($page - 1) * $pageSize;
+
         $search = $data['filter']['search'] ?? '';
         $search = '%' . $search . '%';
+
         $searchCondition = '';
-        if (!empty($search)) {
-            $searchCondition = " AND (name LIKE ? OR description LIKE ?)";
+        $searchParams = [];
+
+        if (!empty(trim($data['filter']['search'] ?? ''))) {
+            $searchCondition = " AND (`name` LIKE ? OR `description` LIKE ?)";
             $searchParams = [$search, $search];
-        } else {
-            $searchParams = [];
         }
+
         $sql = "SELECT id AS productId, `name`, `description`
                 FROM products 
                 WHERE deleted_at IS NULL $searchCondition
                 LIMIT $pageSize OFFSET $offset";
-        $params = array_merge($searchParams, [$pageSize, $offset]);
-        $products = DB::raw($sql, $params);
+
+        $products = DB::raw($sql, $searchParams);
         $prductsData = [];
         foreach ($products as $product) {
 
