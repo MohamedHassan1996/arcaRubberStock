@@ -164,12 +164,17 @@ $router->post('api/product-codes', 'ProductCodeController@store');
 $router->put('api/product-codes', 'ProductCodeController@update');
 $router->delete('api/product-codes/{id}', 'ProductCodeController@destroy');
 
-// Orders
+// Operator Orders
 $router->get('api/operator-orders', 'OperatorOrderController@index');
 $router->get('api/operator-orders/{id}', 'OperatorOrderController@show');
 $router->post('api/operator-orders', 'OperatorOrderController@store');
 $router->put('api/operator-orders', 'OperatorOrderController@update');
 $router->delete('api/operator-orders', 'OperatorOrderController@destroy');
+
+// orderItems
+
+$router->get('api/order-items', 'OrderItemController@index');
+$router->get('api/order-items/{id}', 'OrderItemController@show');
 
 // stocks
 $router->get('api/stocks', 'StockController@index');

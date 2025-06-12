@@ -14,7 +14,7 @@ use Core\Middleware;
  *
  * PHP version 5.4
  */
-class OperatorOrderController extends Controller implements HasMiddleware
+class OrderController extends Controller implements HasMiddleware
 {
 
     public function __construct()
@@ -56,7 +56,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
         ];
     }
 
-    /*public function index()
+    public function index()
     {
         $data = request();
         $pageSize = (int) $data['pageSize'];
@@ -83,7 +83,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
         ];
 
         return ApiResponse::success($responseData);
-    }*/
+    }
     public function store()
     {
 
@@ -100,7 +100,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
 
             foreach ($data['orderItems'] as $key => $orderItemData) {
 
-                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_id`, `quantity`, `created_at`) VALUES (?, ?, ?, ?)", [$order, $orderItemData['productId'], $orderItemData['quantity'], date('Y-m-d H:i:s')], false);
+                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_code_id`, `quantity`, `created_at`) VALUES (?, ?, ?, ?)", [$order, $orderItemData['productCodeId'], $orderItemData['quantity'], date('Y-m-d H:i:s')], false);
             }
 
             DB::commit();
@@ -114,7 +114,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
         
     }
 
-    /*public function show($id){
+    public function show($id){
 
         $orderData = DB::raw("SELECT * FROM orders WHERE id = ?", [$id]);
 
@@ -222,6 +222,6 @@ class OperatorOrderController extends Controller implements HasMiddleware
             throw $th;
         }
         return ApiResponse::success('Order deleted successfully');
-    }*/
+    }
 
 }

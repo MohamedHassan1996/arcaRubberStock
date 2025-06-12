@@ -67,16 +67,22 @@ class ProductController extends Controller implements HasMiddleware
         $pageSize = (int) $data['pageSize'];
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
-
+        $search = $data['filter']['search'] ?? '';
+        $search = '%' . $search . '%';
+        $searchCondition = '';
+        if (!empty($search)) {
+            $searchCondition = " AND (name LIKE ? OR description LIKE ?)";
+            $searchParams = [$search, $search];
+        } else {
+            $searchParams = [];
+        }
         $sql = "SELECT id AS productId, `name`, `description`
                 FROM products 
-                WHERE deleted_at IS NULL 
+                WHERE deleted_at IS NULL $searchCondition
                 LIMIT $pageSize OFFSET $offset";
-
-        $products = DB::raw($sql);
-
+        $params = array_merge($searchParams, [$pageSize, $offset]);
+        $products = DB::raw($sql, $params);
         $prductsData = [];
-
         foreach ($products as $product) {
 
             $productRole = DB::raw(
@@ -92,26 +98,13 @@ class ProductController extends Controller implements HasMiddleware
                 continue;
             }
 
-            // Step 1: Get product codes
-            // $productCodes = DB::select(
-            //     "SELECT id AS productCodeId
-            //     FROM product_codes 
-            //     WHERE deleted_at IS NULL AND product_id = ?",
-            //     [$product['productId']]
-            // );
-
-            // Step 2: Extract IDs as array
-            // $productCodeIds = array_map(fn($row) => is_array($row) ? $row['productCodeId'] : $row->productCodeId, $productCodes);
-
             $prductsData[] = [
                 'productId' => $product['productId'],
                 'name' => $product['name'],
                 'description' => $product['description'] ?? '',
             ];
         }
-
-        $productsCount = DB::raw("SELECT count(*) as total FROM products WHERE deleted_at IS NULL");
-
+        $productsCount = DB::raw("SELECT count(*) as total FROM products WHERE deleted_at IS NULL $searchCondition", $searchParams);
         $responseData = [
             'products' => $prductsData,
             'pagination' => [
@@ -121,8 +114,18 @@ class ProductController extends Controller implements HasMiddleware
                 'total' => $productsCount[0]['total'] ?? 0
             ]
         ];
-
         return ApiResponse::success($responseData);
+
+                   // Step 1: Get product codes
+            // $productCodes = DB::select(
+            //     "SELECT id AS productCodeId
+            //     FROM product_codes 
+            //     WHERE deleted_at IS NULL AND product_id = ?",
+            //     [$product['productId']]
+            // );
+
+            // Step 2: Extract IDs as array
+            // $productCodeIds = array_map(fn($row) => is_array($row) ? $row['productCodeId'] : $row->productCodeId, $productCodes);
     }
     public function store()
     {
@@ -136,7 +139,11 @@ class ProductController extends Controller implements HasMiddleware
 
             foreach ($data['productCodes'] as $key => $productCodeData) {
 
-                DB::raw("INSERT INTO `product_codes` (`product_id`, `code`) VALUES (?, ?)", [$product, $productCodeData['code']], false);
+                $productCode = DB::raw("INSERT INTO `product_codes` (`product_id`, `code`) VALUES (?, ?)", [$product, $productCodeData['code']], false);
+
+                DB::raw("INSERT INTO `stocks` (`product_code_id`, `quantity`) VALUES (?, ?)", [$productCode, 0], false);
+
+
             }
 
             foreach ($data['roleProducts'] as $key => $roleProduct) {
