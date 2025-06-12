@@ -88,7 +88,11 @@ class ConfirmOrderItemController extends Controller implements HasMiddleware
                 date('Y-m-d H:i:s')
             ]);
 
-            
+            DB::raw("UPDATE stocks SET quantity = quantity - ? WHERE id = ?", [
+                $data['quantity'],
+                $data['stockId']
+            ]);
+
             DB::commit();
 
             return ApiResponse::success('Order updated successfully');
