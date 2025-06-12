@@ -72,11 +72,12 @@ class OrderItemController extends Controller implements HasMiddleware
 
         $placeholders = implode(',', array_fill(0, count($statuses), '?'));
 
-        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, orders.id AS orderId, order_items.product_id AS productId,
-                    orders.number AS orderNumber, users.username
+        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
+                    orders.number AS orderNumber, users.username, products.name AS productName
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
                 JOIN users ON orders.user_id = users.id
+                JOIN products ON order_items.product_id = products.id
                 WHERE order_items.deleted_at IS NULL AND orders.deleted_at IS NULL
                 AND order_items.status IN ($placeholders)
                 LIMIT $pageSize OFFSET $offset";
@@ -108,7 +109,7 @@ class OrderItemController extends Controller implements HasMiddleware
                     AND order_items.deleted_at IS NULL
                     AND orders.deleted_at IS NULL
                 ", [
-                    $orderItem['productCodeId'],
+                    $orderItem['productId'],
                     $auth->id,
                     $periodDays
                 ]);
@@ -119,6 +120,9 @@ class OrderItemController extends Controller implements HasMiddleware
 
             $orderItemsData[] = [
                 'orderItemId' => $orderItem['orderItemId'],
+                'productId' => $orderItem['productId'],
+                'productName' => $orderItem['productName'],
+                'orderItemStatus' => $orderItem['orderItemStatus'],
                 'quantity' => $orderItem['quantity'],
                 'orderId' => $orderItem['orderId'],
                 'orderNumber' => $orderItem['orderNumber'],
