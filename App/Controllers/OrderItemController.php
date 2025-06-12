@@ -270,8 +270,7 @@ class OrderItemController extends Controller implements HasMiddleware
     {
         try {
             DB::beginTransaction();
-            DB::raw("UPDATE `orders` SET deleted_at = ? WHERE id = ?", [date('Y-m-d H:i:s'), $id]);
-            DB::raw("UPDATE `order_items` SET deleted_at = ? WHERE order_id = ?", [date('Y-m-d H:i:s'), $id]);
+            DB::raw("UPDATE `order_items` SET deleted_at = ? WHERE id = ?", [date('Y-m-d H:i:s'), $id]);
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();

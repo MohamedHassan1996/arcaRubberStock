@@ -61,6 +61,8 @@ class StockController extends Controller implements HasMiddleware
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
 
+        $flter = $data['filter']['productId'] ?? null;
+
         $sql = "SELECT stocks.id AS stockId, product_codes.code AS productCode, stocks.quantity, products.name as productName
                 FROM stocks 
                 LEFT JOIN product_codes ON stocks.product_code_id = product_codes.id
