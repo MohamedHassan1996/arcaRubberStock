@@ -179,7 +179,7 @@ class OrderItemController extends Controller implements HasMiddleware
 
         $auth = Auth::user();
 
-        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_itmes.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
+        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
                     orders.number AS orderNumber, users.username, products.name AS productName
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
