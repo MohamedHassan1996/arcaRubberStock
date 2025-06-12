@@ -103,7 +103,7 @@ class OrderItemController extends Controller implements HasMiddleware
                     SELECT SUM(order_items.quantity) as totalQuantity
                     FROM order_items 
                     LEFT JOIN orders ON order_items.order_id = orders.id
-                    WHERE order_items.product_code_id = ?
+                    WHERE order_items.product_id = ?
                     AND orders.user_id = ?
                     AND order_items.created_at >= NOW() - INTERVAL ? DAY
                     AND order_items.deleted_at IS NULL
