@@ -178,13 +178,18 @@ $router->get('api/order-items/{id}', 'OrderItemController@show');
 $router->put('api/order-items', 'OrderItemController@update');
 $router->delete('api/order-items/{id}', 'OrderItemController@destroy');
 
-//
+// change order item status
 $router->put('api/order-item-status', 'OrderItemStatusController@update');
+
+// confirm order item
+$router->put('api/confirm-order-item', 'ConfirmOrderItemController@update');
 
 // stocks
 $router->get('api/stocks', 'StockController@index');
 $router->get('api/stocks/{id}', 'StockController@show');
 $router->put('api/stocks', 'StockController@update');
+
+
 
 
 // roleProduct

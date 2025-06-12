@@ -61,16 +61,22 @@ class StockController extends Controller implements HasMiddleware
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
 
-        $flter = $data['filter']['productId'] ?? null;
+        $productId = $data['filter']['productId'] ?? null;
 
         $sql = "SELECT stocks.id AS stockId, product_codes.code AS productCode, stocks.quantity, products.name as productName
                 FROM stocks 
                 LEFT JOIN product_codes ON stocks.product_code_id = product_codes.id
                 LEFT JOIN products ON product_codes.product_id = products.id
-                WHERE stocks.deleted_at IS NULL 
-                LIMIT $pageSize OFFSET $offset";
+                WHERE stocks.deleted_at IS NULL";
+                
 
-        $productCodes = DB::raw($sql);
+        if ($productId) {
+            $sql .= " AND products.id = ? LIMIT $pageSize OFFSET $offset";
+            $productCodes = DB::raw($sql, [$productId]);
+        }else{
+            $productCodes = DB::raw($sql);
+        }
+
 
         $productCodesCount = DB::raw("SELECT count(*) as total FROM products WHERE deleted_at IS NULL");
 
