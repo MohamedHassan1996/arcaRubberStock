@@ -248,9 +248,8 @@ class OrderItemController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
             
-            $orderItem = DB::raw("UPDATE `order_items` SET `quantity` = ?, `status` = ? WHERE id = ?", [
+            $orderItem = DB::raw("UPDATE `order_items` SET `quantity` = ? WHERE id = ?", [
                 $data['quantity'],
-                $data['status'],
                 $data['orderItemId']
             ]);
 
