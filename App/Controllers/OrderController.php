@@ -73,6 +73,7 @@ class OrderController extends Controller implements HasMiddleware
         LEFT JOIN users ON orders.user_id = users.id
         WHERE orders.deleted_at IS NULL 
         AND orders.status = ?
+        ORDER BY orders.created_at DESC
         LIMIT $pageSize OFFSET $offset";
 
 
