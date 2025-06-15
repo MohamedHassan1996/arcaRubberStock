@@ -66,8 +66,8 @@ class OrderController extends Controller implements HasMiddleware
         $sql = "SELECT orders.id AS orderId, orders.number AS orderNumber, orders.status, orders.created_at As createdAt, users.username AS username
                 FROM orders 
                 LEFT JOIN users ON orders.user_id = users.id
-                WHERE deleted_at IS NULL 
-                AND `status` = ?
+                WHERE orders.deleted_at IS NULL 
+                AND orders.status = ?
                 LIMIT $pageSize OFFSET $offset";
 
         $orders = DB::raw($sql, [OrderStatus::CONFIRMED->value]);
