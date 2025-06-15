@@ -100,7 +100,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
 
             foreach ($data['orderItems'] as $key => $orderItemData) {
 
-                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_id`, `quantity`, `created_at`) VALUES (?, ?, ?, ?)", [$order, $orderItemData['productId'], $orderItemData['quantity'], date('Y-m-d H:i:s')], false);
+                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_id`, `quantity`) VALUES (?, ?, ?)", [$order, $orderItemData['productId'], $orderItemData['quantity']], false);
             }
 
             DB::commit();

@@ -222,7 +222,7 @@ class ProductController extends Controller implements HasMiddleware
             DB::rollBack();
             throw $th;
         }
-        return ApiResponse::success('Order deleted successfully');
+        return ApiResponse::success('Product deleted successfully');
     }
 
 }

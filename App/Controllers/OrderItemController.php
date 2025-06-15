@@ -73,7 +73,7 @@ class OrderItemController extends Controller implements HasMiddleware
         $placeholders = implode(',', array_fill(0, count($statuses), '?'));
 
         $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
-                    orders.number AS orderNumber, users.username, products.name AS productName
+                    orders.number AS orderNumber, users.username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
                 JOIN users ON orders.user_id = users.id
@@ -91,13 +91,16 @@ class OrderItemController extends Controller implements HasMiddleware
         $orderItemsData = [];
 
         foreach($orderItems as $orderItem) {
-            $maxTimesToOrderInPeriod = DB::raw('SELECT * FROM role_product WHERE product_id = ? AND role_id = ? AND deleted_at IS NULL', [$orderItem['productId'], $auth->product_role_id]);
+            $maxTimesToOrderInPeriod = DB::raw('SELECT * FROM role_product WHERE product_id = ? AND role_id = ? AND deleted_at IS NULL', [$orderItem['productId'], $orderItem['productRoleId']]);
+
             $previousOrderQuantity = 0;
             if(!empty($maxTimesToOrderInPeriod)) {
                 $periodData = DB::raw("SELECT * FROM parameter_values WHERE id = ?", [$maxTimesToOrderInPeriod[0]['period_id']]);
 
 
                 $periodDays = (int) ($periodData[0]['description'] ?? 0);
+
+
 
                 $previousOrderQuantity = DB::raw("
                     SELECT SUM(order_items.quantity) as totalQuantity
@@ -108,13 +111,15 @@ class OrderItemController extends Controller implements HasMiddleware
                     AND order_items.created_at >= NOW() - INTERVAL ? DAY
                     AND order_items.deleted_at IS NULL
                     AND orders.deleted_at IS NULL
+                    AND order_items.status IN ('" . OrderItemStatus::CONFIRMED->value . "')
                 ", [
                     $orderItem['productId'],
-                    $auth->id,
+                    $orderItem['userId'],
                     $periodDays
                 ]);
 
                 $previousOrderQuantity = $previousOrderQuantity[0]['totalQuantity'] ?? 0;   
+
             }
 
 
@@ -128,7 +133,7 @@ class OrderItemController extends Controller implements HasMiddleware
                 'orderNumber' => $orderItem['orderNumber'],
                 'username' => $orderItem['username'],
                 'maxQuantity' => $maxTimesToOrderInPeriod[0]['quantity'] ?? '-',
-                'previousQuantity' => $previousOrderQuantity[0]['totalQuantity'] ?? 0
+                'previousQuantity' => (int)$previousOrderQuantity ?? 0
             ];
         }
 
@@ -180,7 +185,7 @@ class OrderItemController extends Controller implements HasMiddleware
         $auth = Auth::user();
 
         $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
-                    orders.number AS orderNumber, users.username, products.name AS productName
+                    orders.number AS orderNumber, users.username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
                 JOIN users ON orders.user_id = users.id
@@ -193,13 +198,16 @@ class OrderItemController extends Controller implements HasMiddleware
         $orderItemsData = [];
 
         foreach($orderItems as $orderItem) {
-            $maxTimesToOrderInPeriod = DB::raw('SELECT * FROM role_product WHERE product_id = ? AND role_id = ? AND deleted_at IS NULL', [$orderItem['productId'], $auth->product_role_id]);
+            $maxTimesToOrderInPeriod = DB::raw('SELECT * FROM role_product WHERE product_id = ? AND role_id = ? AND deleted_at IS NULL', [$orderItem['productId'], $orderItem['productRoleId']]);
             $previousOrderQuantity = 0;
+
+
             if(!empty($maxTimesToOrderInPeriod)) {
                 $periodData = DB::raw("SELECT * FROM parameter_values WHERE id = ?", [$maxTimesToOrderInPeriod[0]['period_id']]);
 
 
                 $periodDays = (int) ($periodData[0]['description'] ?? 0);
+
 
                 $previousOrderQuantity = DB::raw("
                     SELECT SUM(order_items.quantity) as totalQuantity
@@ -212,7 +220,7 @@ class OrderItemController extends Controller implements HasMiddleware
                     AND orders.deleted_at IS NULL
                 ", [
                     $orderItem['productId'],
-                    $auth->id,
+                    $orderItem['userId'],
                     $periodDays
                 ]);
 

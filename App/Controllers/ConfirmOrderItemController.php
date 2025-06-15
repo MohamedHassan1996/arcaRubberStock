@@ -78,14 +78,14 @@ class ConfirmOrderItemController extends Controller implements HasMiddleware
             
             DB::raw("UPDATE `order_items` SET `status` = ?, `delivered_quantity` = ? WHERE id = ?", [
                 $status,
+                $deliveredQuantity,
                 $data['orderItemId']
             ]);
 
-            DB::raw("INERT INTO out_stocks (order_id, order_item_id, quantity, created_at) VALUES (?, ?, ?, ?)", [
+            DB::raw("INSERT INTO out_stocks (order_id, order_item_id, quantity) VALUES (?, ?, ?)", [
                 $orderItem[0]['order_id'],
                 $data['orderItemId'],
-                $data['quantity'],
-                date('Y-m-d H:i:s')
+                $data['quantity']
             ]);
 
             DB::raw("UPDATE stocks SET quantity = quantity - ? WHERE id = ?", [

@@ -164,12 +164,15 @@ $router->post('api/product-codes', 'ProductCodeController@store');
 $router->put('api/product-codes', 'ProductCodeController@update');
 $router->delete('api/product-codes/{id}', 'ProductCodeController@destroy');
 
-// Operator Orders
-$router->get('api/operator-orders', 'OperatorOrderController@index');
-$router->get('api/operator-orders/{id}', 'OperatorOrderController@show');
+// Orders
+$router->get('api/orders', 'OrderController@index');
+$router->get('api/orders/{id}', 'OrderController@show');
 $router->post('api/operator-orders', 'OperatorOrderController@store');
 $router->put('api/operator-orders', 'OperatorOrderController@update');
 $router->delete('api/operator-orders', 'OperatorOrderController@destroy');
+
+//operator orders
+$router->post('api/operator-orders', 'OperatorOrderController@store');
 
 // orderItems
 
@@ -182,7 +185,7 @@ $router->delete('api/order-items/{id}', 'OrderItemController@destroy');
 $router->put('api/order-item-status', 'OrderItemStatusController@update');
 
 // confirm order item
-$router->put('api/confirm-order-item', 'ConfirmOrderItemController@update');
+$router->put('api/order-item-confirm', 'ConfirmOrderItemController@update');
 
 // stocks
 $router->get('api/stocks', 'StockController@index');

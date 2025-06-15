@@ -84,6 +84,11 @@ class ProductCodeController extends Controller implements HasMiddleware
                 false
             );
 
+            DB::raw(
+                "INSERT INTO `stocks` (`product_code_id`, `quantity`) VALUES (?, ?)",
+                [$productCode, 0],
+            );
+
             DB::commit();
 
             return ApiResponse::success('Product created successfully');
