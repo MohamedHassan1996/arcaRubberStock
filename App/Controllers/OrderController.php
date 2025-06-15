@@ -63,8 +63,9 @@ class OrderController extends Controller implements HasMiddleware
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
 
-        $sql = "SELECT id AS orderId, `number` AS orderNumber, `status` 
+        $sql = "SELECT orders.id AS orderId, orders.number AS orderNumber, orders.status, orders.created_at As createdAt, users.username AS username
                 FROM orders 
+                LEFT JOIN users ON orders.user_id = users.id
                 WHERE deleted_at IS NULL 
                 AND `status` = ?
                 LIMIT $pageSize OFFSET $offset";
