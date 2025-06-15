@@ -175,7 +175,7 @@ class OrderController extends Controller implements HasMiddleware
             }
 
 
-            $orderItemsData = [
+            $orderItemsData[] = [
                 'orderItemId' => $orderItem['orderItemId'],
                 'productId' => $orderItem['productId'],
                 'productName' => $orderItem['productName'],
