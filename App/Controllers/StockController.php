@@ -103,7 +103,7 @@ class StockController extends Controller implements HasMiddleware
 
         $productCodesData = DB::raw($sql, [$id]);
 
-        return ApiResponse::success($productCodesData);
+        return ApiResponse::success($productCodesData[0]);
 
     }
 
