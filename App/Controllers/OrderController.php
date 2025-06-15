@@ -52,11 +52,11 @@ class OrderController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            new Middleware('permission:all_orders', ['index']),
-            new Middleware('permission:create_order', ['store']),
-            new Middleware('permission:show_order', ['show']),
-            new Middleware('permission:update_order', ['update']),
-            new Middleware('permission:delete_order', ['destroy']),
+            // new Middleware('permission:all_orders', ['index']),
+            // new Middleware('permission:create_order', ['store']),
+            // new Middleware('permission:show_order', ['show']),
+            // new Middleware('permission:update_order', ['update']),
+            // new Middleware('permission:delete_order', ['destroy']),
         ];
     }
 
@@ -113,7 +113,7 @@ class OrderController extends Controller implements HasMiddleware
 
             foreach ($data['orderItems'] as $key => $orderItemData) {
 
-                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_code_id`, `quantity`, `created_at`) VALUES (?, ?, ?, ?)", [$order, $orderItemData['productCodeId'], $orderItemData['quantity'], date('Y-m-d H:i:s')], false);
+                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_id`, `quantity`) VALUES (?, ?, ?)", [$order, $orderItemData['productId'], $orderItemData['quantity']], false);
             }
 
             DB::commit();
@@ -129,51 +129,75 @@ class OrderController extends Controller implements HasMiddleware
 
     public function show($id){
 
-        $orderData = DB::raw("SELECT * FROM orders WHERE id = ?", [$id]);
+ $auth = Auth::user();
 
-        $orderItemsData = DB::select(
-            "SELECT 
-                order_items.id AS orderItemId,
-                order_items.product_code_id AS productCodeId, 
-                order_items.quantity, 
-                product_codes.code AS productCode
-            FROM order_items
-            JOIN product_codes ON order_items.product_code_id = product_codes.id
-            WHERE order_items.order_id = ?",
-            [$id]
-        );
+        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
+                    orders.number AS orderNumber, users.username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName, DATE_FORMAT(orders.created_at, '%d/%m/%Y') AS createdAt
+                FROM order_items 
+                JOIN orders ON order_items.order_id = orders.id
+                JOIN users ON orders.user_id = users.id
+                JOIN products ON order_items.product_id = products.id
+                WHERE order_items.deleted_at IS NULL AND orders.deleted_at IS NULL
+                AND orders.id = ?";
 
+        $orderItems = DB::raw($sql, [$id]);
 
+        $orderItemsData = [];
 
-        foreach ($orderItemsData as $key => $orderItemData) {
-            $role = DB::raw("SELECT * FROM model_has_role WHERE model_id = ?", [$orderData[0]['user_id']]);
-            $productCode = DB::raw("SELECT * FROM product_codes WHERE id = ?", [$orderItemData['productCodeId']]);
-            
-
-            $roleProduct = DB::raw("SELECT * FROM role_product WHERE product_id = ? AND role_id = ?", [$productCode[0]['product_id'], $role[0]['role_id']]);
+        foreach($orderItems as $orderItem) {
+            $maxTimesToOrderInPeriod = DB::raw('SELECT * FROM role_product WHERE product_id = ? AND role_id = ? AND deleted_at IS NULL', [$orderItem['productId'], $orderItem['productRoleId']]);
+            $previousOrderQuantity = 0;
 
 
-            $parameterValue = DB::raw("SELECT `description` FROM parameter_values WHERE id = ?", [$roleProduct[0]['period_id']]);
-            $days = isset($parameterValue[0]) ? (int) $parameterValue[0]['description'] : 0;
-            $sql = "
-                SELECT SUM(quantity) AS totalQuantity
-                FROM order_items
-                WHERE product_code_id = ?
-                AND created_at >= NOW() - INTERVAL $days DAY
-            ";
+            if(!empty($maxTimesToOrderInPeriod)) {
+                $periodData = DB::raw("SELECT * FROM parameter_values WHERE id = ?", [$maxTimesToOrderInPeriod[0]['period_id']]);
 
-            $usedQuantity = DB::raw($sql, [$orderItemData['productCodeId']]);
-            $orderItemsData[$key]['usedQuantity'] = $usedQuantity[0]['totalQuantity'] ?? 0;      
-            $orderItemsData[$key]['maxQuantity'] = $roleProduct[0]['quantity'] ?? 0;      
-            $orderItemsData[$key]['period'] = $parameterValue[0]['description'] ?? 0;      
+
+                $periodDays = (int) ($periodData[0]['description'] ?? 0);
+
+
+                $previousOrderQuantity = DB::raw("
+                    SELECT SUM(order_items.quantity) as totalQuantity
+                    FROM order_items 
+                    LEFT JOIN orders ON order_items.order_id = orders.id
+                    WHERE order_items.product_id = ?
+                    AND orders.user_id = ?
+                    AND order_items.created_at >= NOW() - INTERVAL ? DAY
+                    AND order_items.deleted_at IS NULL
+                    AND orders.deleted_at IS NULL
+                ", [
+                    $orderItem['productId'],
+                    $orderItem['userId'],
+                    $periodDays
+                ]);
+
+                $previousOrderQuantity = $previousOrderQuantity[0]['totalQuantity'] ?? 0;   
+            }
+
+
+            $orderItemsData = [
+                'orderItemId' => $orderItem['orderItemId'],
+                'productId' => $orderItem['productId'],
+                'productName' => $orderItem['productName'],
+                'quantity' => $orderItem['quantity'],
+                'orderId' => $orderItem['orderId'],
+                'orderNumber' => $orderItem['orderNumber'],
+                'username' => $orderItem['username'],
+                'createdAt' => $orderItem['createdAt'],
+                'orderItemStatus' => $orderItem['orderItemStatus'],
+            ];
         }
 
+
         $orderResponse = [
-            'orderId' => $id,
-            'orderNumber' => $orderData[0]['number'],
-            'status' => $orderData[0]['status'],
-            'orderItems' => $orderItemsData,
+            'orderId' => $orderItemsData['orderId'],
+            'orderNumber' => $orderItemsData['orderNumber'],
+            'username' => $orderItemsData['username'],
+            'status' => $orderItems[0]['orderItemStatus'],
+            'createdAt' => $orderItems[0]['createdAt'],
+            'orderItems' => $orderItemsData
         ];
+
 
         return ApiResponse::success($orderResponse);
 
@@ -193,9 +217,9 @@ class OrderController extends Controller implements HasMiddleware
             foreach ($data['orderItems'] as $key => $orderItemData) {
                 $orderItem = null;
                 if($orderItemData['actionStatus'] == "CREATE"){
-                    $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_code_id`, `quantity`, `created_at`) VALUES (?, ?, ?, ?)", [$data['orderId'], $orderItemData['productCodeId'], $orderItemData['quantity'], date('Y-m-d H:i:s')]);
+                    $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_id`, `quantity`) VALUES (?, ?, ?)", [$data['orderId'], $orderItemData['productCodeId'], $orderItemData['quantity']]);
                 }elseif($orderItemData['actionStatus'] == "UPDATE"){
-                    $orderItem = DB::raw("UPDATE `order_items` SET product_code_id = ?, `quantity` = ? WHERE id = ?", [$orderItemData['productCodeId'], $orderItemData['quantity'], $orderItemData['orderItemId']]);
+                    $orderItem = DB::raw("UPDATE `order_items` SET product_id = ?, `quantity` = ? WHERE id = ?", [$orderItemData['productId'], $orderItemData['quantity'], $orderItemData['orderItemId']]);
                 }elseif($orderItemData['actionStatus'] == "DELETE"){
                     DB::raw("DELETE FROM `order_items` WHERE id = ?", [$orderItemData['orderItemId']]);
                 }elseif($orderItemData['actionStatus'] == ""){
@@ -203,9 +227,9 @@ class OrderController extends Controller implements HasMiddleware
                 }
 
                 if($data['status'] == OrderStatus::CONFIRMED->value && in_array($orderItemData['actionStatus'], ['CREATED', 'UPDATED', ''])){
-                        $outStock = DB::raw("INSERT INTO out_stocks (`order_id`, `product_code_id`, `quantity`) VALUES (?, ?, ?)", [$data['orderId'], $orderItemData['productCodeId'], $orderItemData['quantity']]);
+                        $outStock = DB::raw("INSERT INTO out_stocks (`order_id`, `product_id`, `quantity`) VALUES (?, ?, ?)", [$data['orderId'], $orderItemData['productId'], $orderItemData['quantity']]);
 
-                        $Stock = DB::raw("UPDATE `stocks` SET quantity = quantity - ? WHERE product_code_id = ?", [
+                        $Stock = DB::raw("UPDATE `stocks` SET quantity = quantity - ? WHERE product_id = ?", [
                             $orderItemData['quantity'],
                             $orderItem
                         ]);
