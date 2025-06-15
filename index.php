@@ -174,6 +174,14 @@ $router->delete('api/operator-orders', 'OperatorOrderController@destroy');
 //operator orders
 $router->post('api/operator-orders', 'OperatorOrderController@store');
 
+// orders
+$router->get('api/orders', 'OrderController@index');
+$router->get('api/orders/{id}', 'OrderController@show');
+$router->post('api/orders', 'OrderController@store');
+$router->put('api/orders', 'OrderController@update');
+$router->delete('api/orders/{id}', 'OrderController@destroy');
+
+
 // orderItems
 
 $router->get('api/order-items', 'OrderItemController@index');
