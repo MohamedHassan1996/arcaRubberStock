@@ -66,11 +66,12 @@ class OrderController extends Controller implements HasMiddleware
         $sql = "SELECT id AS orderId, `number` AS orderNumber, `status` 
                 FROM orders 
                 WHERE deleted_at IS NULL 
+                AND `status` = ?
                 LIMIT $pageSize OFFSET $offset";
 
-        $orders = DB::raw($sql);
+        $orders = DB::raw($sql, [OrderStatus::CONFIRMED->value]);
 
-        $ordersCount = DB::raw("SELECT count(*) as total FROM orders WHERE deleted_at IS NULL");
+        $ordersCount = DB::raw("SELECT count(*) as total FROM orders WHERE deleted_at IS NULL AND `status` = ?", [OrderStatus::CONFIRMED->value]);
 
         $responseData = [
             'orders' => $orders,
