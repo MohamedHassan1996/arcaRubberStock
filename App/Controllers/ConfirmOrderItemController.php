@@ -51,7 +51,7 @@ class ConfirmOrderItemController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            //new Middleware('permission:store_operatotr_order', ['index'])
+            new Middleware('permission:confirm_order_item', ['update'])
         ];
     }
 

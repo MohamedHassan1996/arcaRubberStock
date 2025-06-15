@@ -51,10 +51,12 @@ if ($addPremssions) {
         'destroy_role_product',
 
         'all_operator_orders',
-        'store_operator_order',
-        'show_operator_order',
-        'update_operator_order',
-        'destroy_operator_order',
+
+        'all_orders',
+        'store_order',
+        'show_order',
+        'update_order',
+        'destroy_order',
 
         'all_stocks',
         'show_stock',
@@ -64,7 +66,16 @@ if ($addPremssions) {
         'store_parameter',
         'show_parameter',
         'update_parameter',
-        'destroy_parameter'
+        'destroy_parameter',
+
+        'all_order_items',
+        'show_order_item',
+        'update_order_item',
+        'destroy_order_item',
+
+        'update_order_status',
+
+        'confirm_order_item',
     ];
 
     foreach ($allPermissions as $permission) {
@@ -101,10 +112,15 @@ if ($addPremssions) {
     // Step 6: Assign specific permissions to supervisor
     $supervisorPerms = [
         'all_operator_orders',
-        'store_operator_order',
-        'show_operator_order',
-        'update_operator_order',
-        'all_products'
+        'all_order_items',
+        'all_orders',
+        'store_order',
+        'show_order',
+        'update_order',
+        'destroy_order',
+        'all_products',
+        'update_order_status',
+        'update_order_item'
     ];
 
     foreach ($supervisorPerms as $permName) {

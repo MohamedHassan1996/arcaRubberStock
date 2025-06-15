@@ -52,7 +52,11 @@ class OrderController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            //new Middleware('permission:store_operatotr_order', ['index'])
+            new Middleware('permission:all_orders', ['index']),
+            new Middleware('permission:create_order', ['store']),
+            new Middleware('permission:show_order', ['show']),
+            new Middleware('permission:update_order', ['update']),
+            new Middleware('permission:delete_order', ['destroy']),
         ];
     }
 

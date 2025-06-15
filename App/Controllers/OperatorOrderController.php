@@ -52,7 +52,7 @@ class OperatorOrderController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            //new Middleware('permission:store_operatotr_order', ['index'])
+            new Middleware('permission:store_operator_order', ['index'])
         ];
     }
 

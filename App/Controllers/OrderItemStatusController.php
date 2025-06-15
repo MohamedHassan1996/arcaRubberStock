@@ -53,7 +53,7 @@ class OrderItemStatusController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            //new Middleware('permission:store_operatotr_order', ['index'])
+            new Middleware('permission:update_order_status', ['update'])
         ];
     }
 
