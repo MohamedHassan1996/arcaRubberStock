@@ -192,9 +192,6 @@ $router->get('api/stocks', 'StockController@index');
 $router->get('api/stocks/{id}', 'StockController@show');
 $router->put('api/stocks', 'StockController@update');
 
-
-
-
 // roleProduct
 $router->get('api/role-products', 'RoleProductController@index');
 $router->get('api/role-products/{id}', 'RoleProductController@show');

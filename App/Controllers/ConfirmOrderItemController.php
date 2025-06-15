@@ -93,6 +93,22 @@ class ConfirmOrderItemController extends Controller implements HasMiddleware
                 $data['stockId']
             ]);
 
+            $orderItmes = DB::raw("SELECT * FROM `order_items` WHERE order_id = ?", [$orderItem[0]['order_id']]);
+
+            $allConfirmed = true;
+            foreach ($orderItmes as $item) {
+                if ($item['status'] != OrderItemStatus::CONFIRMED->value) {
+                    $allConfirmed = false;
+                    break;
+                }
+            }
+            if ($allConfirmed) {
+                DB::raw("UPDATE `orders` SET `status` = ? WHERE id = ?", [
+                    OrderItemStatus::CONFIRMED->value,
+                    $orderItem[0]['order_id']
+                ]);
+            }
+
             DB::commit();
 
             return ApiResponse::success('Order updated successfully');
