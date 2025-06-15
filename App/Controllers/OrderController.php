@@ -190,9 +190,9 @@ class OrderController extends Controller implements HasMiddleware
 
 
         $orderResponse = [
-            'orderId' => $orderItemsData['orderId'],
-            'orderNumber' => $orderItemsData['orderNumber'],
-            'username' => $orderItemsData['username'],
+            'orderId' => $orderItemsData[0]['orderId'],
+            'orderNumber' => $orderItemsData[0]['orderNumber'],
+            'username' => $orderItemsData[0]['username'],
             'status' => $orderItems[0]['orderItemStatus'],
             'createdAt' => $orderItems[0]['createdAt'],
             'orderItems' => $orderItemsData
