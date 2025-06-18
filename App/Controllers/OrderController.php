@@ -74,7 +74,7 @@ class OrderController extends Controller implements HasMiddleware
             orders.number AS orderNumber, 
             orders.status, 
             DATE_FORMAT(orders.created_at, '%d/%m/%Y') AS createdAt, 
-            users.username AS username
+            users.name AS username
         FROM orders 
         LEFT JOIN users ON orders.user_id = users.id
         WHERE orders.deleted_at IS NULL 
@@ -148,7 +148,7 @@ class OrderController extends Controller implements HasMiddleware
     $auth = Auth::user();
 
         $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId, order_items.delivered_quantity,
-                    orders.number AS orderNumber, users.username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName, DATE_FORMAT(orders.created_at, '%d/%m/%Y') AS createdAt
+                    orders.number AS orderNumber, users.name AS username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName, DATE_FORMAT(orders.created_at, '%d/%m/%Y') AS createdAt
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
                 JOIN users ON orders.user_id = users.id
