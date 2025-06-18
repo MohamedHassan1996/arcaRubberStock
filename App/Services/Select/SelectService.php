@@ -54,6 +54,8 @@ class SelectService
         $selectServiceMap = [
             'parameters' => ['getAllParameters', ParameterSelectService::class],
             'roles' => ['getAllRoles', RoleSelectService::class],
+            'operators' => ['getAllOperators', UserSelectService::class],
+            'products' => ['getAllProducts', ProductSelectService::class],
         ];
 
         $paramValue = null; // Initialize paramValue

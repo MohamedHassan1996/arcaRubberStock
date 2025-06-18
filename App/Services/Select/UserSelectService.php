@@ -1,14 +1,15 @@
 <?php
 
 namespace App\Services\Select;
-
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use Core\DB;
 
 class UserSelectService
 {
-    public function getAllUsers()
+    public function getAllOperators()
     {
-        return User::all(['id as value', DB::raw('CONCAT(first_name, " ", last_name) as label')]);
+        return DB::raw("SELECT id AS value, name as label FROM users WHERE deleted_at IS NULL");
     }
 }
+
+
+
