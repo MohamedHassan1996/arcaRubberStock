@@ -77,7 +77,7 @@ class OrderItemController extends Controller implements HasMiddleware
         $placeholders = implode(',', array_fill(0, count($statuses), '?'));
 
         $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
-                    orders.number AS orderNumber, users.username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName
+                    orders.number AS orderNumber, users.username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName, order_items.delivered_quantity
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
                 JOIN users ON orders.user_id = users.id
@@ -137,7 +137,8 @@ class OrderItemController extends Controller implements HasMiddleware
                 'orderNumber' => $orderItem['orderNumber'],
                 'username' => $orderItem['username'],
                 'maxQuantity' => $maxTimesToOrderInPeriod[0]['quantity'] ?? '-',
-                'previousQuantity' => (int)$previousOrderQuantity ?? 0
+                'previousQuantity' => (int)$previousOrderQuantity ?? 0,
+                'remainingQuantity' => $orderItem[0]['quantity'] - $orderItem[0]['delivered_quantity']
             ];
         }
 
@@ -188,7 +189,7 @@ class OrderItemController extends Controller implements HasMiddleware
 
         $auth = Auth::user();
 
-        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
+        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId, order_items.delivered_quantity,
                     orders.number AS orderNumber, users.username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
@@ -242,7 +243,8 @@ class OrderItemController extends Controller implements HasMiddleware
                 'username' => $orderItem['username'],
                 'orderItemStatus' => $orderItem['orderItemStatus'],
                 'maxQuantity' => $maxTimesToOrderInPeriod[0]['quantity'] ?? '-',
-                'previousQuantity' => $previousOrderQuantity[0]['totalQuantity'] ?? 0
+                'previousQuantity' => $previousOrderQuantity[0]['totalQuantity'] ?? 0,
+                'remainingQuantity' => $orderItem['quantity'] - $orderItem['delivered_quantity']
             ];
         }
 

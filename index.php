@@ -120,6 +120,7 @@ if ($addPremssions) {
         'destroy_order',
         'all_products',
         'update_order_status',
+        'show_order_item',
         'update_order_item'
     ];
 

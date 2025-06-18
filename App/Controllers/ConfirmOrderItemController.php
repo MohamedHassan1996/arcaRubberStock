@@ -72,6 +72,8 @@ class ConfirmOrderItemController extends Controller implements HasMiddleware
 
             if($deliveredQuantity == $quantity){
                 $status = OrderItemStatus::CONFIRMED->value;
+            } elseif($deliveredQuantity > 0) {
+                $status = OrderItemStatus::PARTIALLY_CONFIRMED->value;
             }else {
                 $status = $orderItem[0]['status'];
             }
@@ -105,6 +107,11 @@ class ConfirmOrderItemController extends Controller implements HasMiddleware
             if ($allConfirmed) {
                 DB::raw("UPDATE `orders` SET `status` = ? WHERE id = ?", [
                     OrderItemStatus::CONFIRMED->value,
+                    $orderItem[0]['order_id']
+                ]);
+            } elseif ($status == OrderItemStatus::PARTIALLY_CONFIRMED->value) {
+                DB::raw("UPDATE `orders` SET `status` = ? WHERE id = ?", [
+                    OrderItemStatus::PARTIALLY_CONFIRMED->value,
                     $orderItem[0]['order_id']
                 ]);
             }

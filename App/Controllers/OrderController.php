@@ -67,6 +67,8 @@ class OrderController extends Controller implements HasMiddleware
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
 
+        $filters = $data['filter'] ?? [];
+
        $sql = "SELECT 
             orders.id AS orderId, 
             orders.number AS orderNumber, 
@@ -76,14 +78,28 @@ class OrderController extends Controller implements HasMiddleware
         FROM orders 
         LEFT JOIN users ON orders.user_id = users.id
         WHERE orders.deleted_at IS NULL 
-        AND orders.status = ?
+        AND orders.status != ?
         ORDER BY orders.created_at DESC
         LIMIT $pageSize OFFSET $offset";
 
+        $params = [OrderStatus::DRAFT->value];
 
-        $orders = DB::raw($sql, [OrderStatus::CONFIRMED->value]);
+        if($filters['productId'] ?? null){
+            $productId = $filters['productId'];
+            $sql .= " AND orders.id IN (SELECT order_id FROM order_items WHERE product_id = ?)";
+            $params[] = $productId;
+        }
 
-        $ordersCount = DB::raw("SELECT count(*) as total FROM orders WHERE deleted_at IS NULL AND `status` = ?", [OrderStatus::CONFIRMED->value]);
+        if($filters['status'] ?? null){
+            $status = $filters['status'];
+            $sql .= " AND orders.status = ?";
+            $params[] = $status;
+        }
+
+
+        $orders = DB::raw($sql, $params);
+
+        $ordersCount = DB::raw("SELECT count(*) as total FROM orders WHERE deleted_at IS NULL AND `status` != ?", [OrderStatus::DRAFT->value]);
 
         $responseData = [
             'orders' => $orders,
@@ -129,9 +145,9 @@ class OrderController extends Controller implements HasMiddleware
 
     public function show($id){
 
- $auth = Auth::user();
+    $auth = Auth::user();
 
-        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
+        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId, order_items.delivered_quantity,
                     orders.number AS orderNumber, users.username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName, DATE_FORMAT(orders.created_at, '%d/%m/%Y') AS createdAt
                 FROM order_items 
                 JOIN orders ON order_items.order_id = orders.id
@@ -185,6 +201,7 @@ class OrderController extends Controller implements HasMiddleware
                 'username' => $orderItem['username'],
                 'createdAt' => $orderItem['createdAt'],
                 'orderItemStatus' => $orderItem['orderItemStatus'],
+                'remainingQuantity' => $orderItem['quantity'] - $orderItem['delivered_quantity'],
             ];
         }
 

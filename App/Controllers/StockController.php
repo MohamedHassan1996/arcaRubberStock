@@ -61,24 +61,35 @@ class StockController extends Controller implements HasMiddleware
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
 
-        $productId = $data['filter']['productId'] ?? null;
+        $filters = $data['filter'] ?? [];
 
         $sql = "SELECT stocks.id AS stockId, product_codes.code AS productCode, stocks.quantity, products.name as productName
                 FROM stocks 
-                LEFT JOIN product_codes ON stocks.product_code_id = product_codes.id
-                LEFT JOIN products ON product_codes.product_id = products.id
+                JOIN product_codes ON stocks.product_code_id = product_codes.id
+                JOIN products ON product_codes.product_id = products.id
                 WHERE stocks.deleted_at IS NULL";
-                
 
-        if ($productId) {
-            $sql .= " AND products.id = ? LIMIT $pageSize OFFSET $offset";
-            $productCodes = DB::raw($sql, [$productId]);
-        }else{
-            $productCodes = DB::raw($sql);
+        $params = [];
+        
+        if($filters['productId'] ?? null){
+            $productId = $filters['productId'];
+            $sql .= " AND products.id = ?";
+            $params[] = $productId;
         }
 
+        if($filters['quantity'] ?? null){
+            $quantity = $filters['quantity'];
+            if(is_numeric($quantity)){
+                $sql .= " AND stocks.quantity >= ?";
+                $params[] = $quantity;
+            }
+        }
 
         $productCodesCount = DB::raw("SELECT count(*) as total FROM products WHERE deleted_at IS NULL");
+
+        $sql .= "LIMIT $pageSize OFFSET $offset";
+
+        $productCodes = DB::raw($sql, $params);
 
         $responseData = [
             'products' => $productCodes,

@@ -69,7 +69,7 @@ class UserController extends Controller implements HasMiddleware
         $page = (int) $data['page'] ?? 1;
         $offset = ($page - 1) * $pageSize;
 
-        $sql = "SELECT users.id AS userId, users.username, roles.name AS roleName
+        $sql = "SELECT users.id AS userId, users.username, users.name, roles.name AS roleName
                 FROM users 
                 LEFT JOIN model_has_role ON users.id = model_has_role.model_id
                 LEFT JOIN roles ON model_has_role.role_id = roles.id
@@ -106,16 +106,16 @@ class UserController extends Controller implements HasMiddleware
                 return ApiResponse::error('User already exists');
             }
 
-            $params = [$data['username'], Hash::make($data['password'])];
+            $params = [$data['username'], Hash::make($data['password']), $data['name']];
 
-            $sql = "INSERT INTO `users` (`username`, `password`";
+            $sql = "INSERT INTO `users` (`username`, `password`, `name`";
 
             if (!empty($data['productRoleId'])) {
                 $sql .= ", `product_role_id`";
                 $params[] = $data['productRoleId'];
             }
 
-            $sql .= ") VALUES (?, ?";
+            $sql .= ") VALUES (?, ?, ?";
 
             if (!empty($data['productRoleId'])) {
                 $sql .= ", ?";
@@ -147,6 +147,7 @@ class UserController extends Controller implements HasMiddleware
         $userResponse = [
             'userId' => $userData[0]['id'],
             'username' => $userData[0]['username'],
+            'name' => $userData[0]['name'],
             'productRoleId' => $userData[0]['product_role_id'] ?? "",
             'roleId' => $userRole[0]['role_id'] ?? "",
         ];
@@ -171,8 +172,8 @@ class UserController extends Controller implements HasMiddleware
             }
             // $user = DB::raw("UPDATE `users` SET username = ?, password = ?, product_role_id = ? WHERE id = ? AND deleted_at IS NULL", [$data['name'], $data['password'], $data['productRoleId'], $data['userId']], false);
 
-            $query = "UPDATE `users` SET username = ?";
-            $bindings = [$data['username']];
+            $query = "UPDATE `users` SET username = ?, name = ?";
+            $bindings = [$data['username'], $data['name']];
 
             // Only include password if not empty
             if ($data['password'] !== '') {

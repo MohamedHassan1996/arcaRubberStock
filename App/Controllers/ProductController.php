@@ -63,7 +63,7 @@ class ProductController extends Controller implements HasMiddleware
     {
         $auth = Auth::user();
         $data = request();
-        $pageSize = (int) $data['pageSize'];
+        $pageSize = 10000;//(int) $data['pageSize'];
         $page = (int) ($data['page'] ?? 1);
         $offset = ($page - 1) * $pageSize;
 

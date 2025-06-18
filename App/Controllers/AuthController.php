@@ -76,6 +76,7 @@ class AuthController extends Controller implements HasMiddleware
             ], 
             'profile' => [
                 'username' => $user->username,
+                'name' => $user->name,
             ],
             'role' => $user->role['name'],
             'permissions' => $user->permissions
