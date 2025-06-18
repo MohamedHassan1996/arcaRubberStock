@@ -87,7 +87,7 @@ class StockController extends Controller implements HasMiddleware
 
         $productCodesCount = DB::raw("SELECT count(*) as total FROM products WHERE deleted_at IS NULL");
 
-        $sql .= "LIMIT $pageSize OFFSET $offset";
+        $sql .= " LIMIT $pageSize OFFSET $offset";
 
         $productCodes = DB::raw($sql, $params);
 
