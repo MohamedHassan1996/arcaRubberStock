@@ -90,12 +90,11 @@ class OrderController extends Controller implements HasMiddleware
             $params[] = $productId;
         }
 
-        if($filters['status'] ?? null){
-            $status = $filters['status'];
-            $sql .= " AND orders.status = ?";
-            $params[] = $status;
+        if($filters['operatorId'] ?? null){
+            $operatorId = $filters['operatorId'];
+            $sql .= " AND orders.user_id = ?";
+            $params[] = $operatorId;
         }
-
 
         $orders = DB::raw($sql, $params);
 
