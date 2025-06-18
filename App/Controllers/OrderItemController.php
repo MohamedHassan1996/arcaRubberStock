@@ -138,7 +138,7 @@ class OrderItemController extends Controller implements HasMiddleware
                 'username' => $orderItem['username'],
                 'maxQuantity' => $maxTimesToOrderInPeriod[0]['quantity'] ?? '-',
                 'previousQuantity' => (int)$previousOrderQuantity ?? 0,
-                'remainingQuantity' => $orderItem[0]['quantity'] - $orderItem[0]['delivered_quantity']
+                'remainingQuantity' => $orderItem['quantity'] - $orderItem['delivered_quantity']
             ];
         }
 
