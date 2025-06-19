@@ -63,27 +63,27 @@ class OrderController extends Controller implements HasMiddleware
 public function index()
 {
     $data = request();
-    $pageSize = (int) $data['pageSize'];
+    $pageSize = (int) ($data['pageSize'] ?? 10);
     $page = (int) ($data['page'] ?? 1);
     $offset = ($page - 1) * $pageSize;
 
     $filters = $data['filter'] ?? [];
 
-    // Start building the SQL query
+    // Base SQL query
     $sql = "SELECT 
                 orders.id AS orderId, 
                 orders.number AS orderNumber, 
                 orders.status, 
                 DATE_FORMAT(orders.created_at, '%d/%m/%Y') AS createdAt, 
                 users.name AS username
-            FROM orders 
+            FROM orders
             LEFT JOIN users ON orders.user_id = users.id
-            WHERE orders.deleted_at IS NULL 
-            AND orders.status != ?";
+            WHERE orders.deleted_at IS NULL
+              AND orders.status != ?";
 
     $params = [OrderStatus::DRAFT->value];
 
-    // Apply filters if provided
+    // Optional product filter
     if (!empty($filters['productId'])) {
         $sql .= " AND orders.id IN (
                     SELECT order_id 
@@ -93,20 +93,19 @@ public function index()
         $params[] = $filters['productId'];
     }
 
+    // Optional operator filter
     if (!empty($filters['operatorId'])) {
         $sql .= " AND orders.user_id = ?";
         $params[] = $filters['operatorId'];
     }
 
-    // Add sorting and pagination
+    // Finalize with ORDER and LIMIT (directly inserted as integers)
     $sql .= " ORDER BY orders.created_at DESC LIMIT $pageSize OFFSET $offset";
-    $params[] = $pageSize;
-    $params[] = $offset;
 
-    // Fetch data
+    // Execute main query
     $orders = DB::raw($sql, $params);
 
-    // Fetch total count for pagination (without LIMIT)
+    // Total count query (ignores filters, you can apply them here too if needed)
     $countSql = "SELECT COUNT(*) AS total 
                  FROM orders 
                  WHERE deleted_at IS NULL 
@@ -114,17 +113,16 @@ public function index()
     $countParams = [OrderStatus::DRAFT->value];
     $ordersCount = DB::raw($countSql, $countParams);
 
-    $responseData = [
+    // Final response
+    return ApiResponse::success([
         'orders' => $orders,
         'pagination' => [
             'page' => $page,
             'pageSize' => $pageSize,
             'totalInPage' => count($orders),
-            'total' => $ordersCount[0]['total'] ?? 0
+            'total' => $ordersCount[0]['total'] ?? 0,
         ]
-    ];
-
-    return ApiResponse::success($responseData);
+    ]);
 }
 
     public function store()
