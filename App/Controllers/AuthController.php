@@ -61,6 +61,8 @@ class AuthController extends Controller implements HasMiddleware
 
         $user = DB::raw("SELECT * FROM users WHERE username = ? AND deleted_at IS NULL", [$data['username']]);
 
+        debug($user);
+
         if (!$user || !Hash::check($data['password'], $user[0]->password)) {
             return ApiResponse::error('Invalid username or password');
         }
