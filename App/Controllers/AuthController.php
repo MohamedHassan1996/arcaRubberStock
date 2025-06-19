@@ -65,10 +65,9 @@ class AuthController extends Controller implements HasMiddleware
             return ApiResponse::error('Invalid username or password');
         }
 
-        debug($user[0]);
         $token = JWT::make([
             'sub' => $user[0]['id'],
-            'email' => $user[0]['email'],
+            'email' => $user[0]['username'],
         ]);
 
         $userRole = User::find($user[0]['id']);
