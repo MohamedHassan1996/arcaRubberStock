@@ -59,7 +59,7 @@ class AuthController extends Controller implements HasMiddleware
     {
         $data = request();
 
-        $user = DB::raw("SELECT * FROM users WHERE username = ? AND deleted_at IS NULL LIMIT 1", [$data['username']]);
+        $user = DB::raw("SELECT * FROM users WHERE username = ? AND deleted_at IS NULL", [$data['username']]);
 
         if (!$user || !Hash::check($data['password'], $user[0]->password)) {
             return ApiResponse::error('Invalid username or password');
@@ -81,8 +81,8 @@ class AuthController extends Controller implements HasMiddleware
                 'username' => $user[0]->username,
                 'name' => $user[0]->name,
             ],
-            'role' => $user->role['name'],
-            'permissions' => $user->permissions
+            'role' => $userRole->role['name'],
+            'permissions' => $userRole->permissions
         ]);
     }
 
