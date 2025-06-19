@@ -61,18 +61,18 @@ class AuthController extends Controller implements HasMiddleware
 
         $user = DB::raw("SELECT * FROM users WHERE username = ? AND deleted_at IS NULL", [$data['username']]);
 
-        if (!$user || !Hash::check($data['password'], $user[0]->password)) {
+        if (!$user || !Hash::check($data['password'], $user[0]['password'])) {
             return ApiResponse::error('Invalid username or password');
         }
 
                 debug($user);
 
         $token = JWT::make([
-            'sub' => $user[0]->id,
-            'email' => $user[0]->email,
+            'sub' => $user[0]['id'],
+            'email' => $user[0]['email'],
         ]);
 
-        $userRole = User::find($user[0]->id);
+        $userRole = User::find($user[0]['id']);
 
         return ApiResponse::success([
             'tokenDetails' => [
@@ -80,8 +80,8 @@ class AuthController extends Controller implements HasMiddleware
                 'expiresAt' => 3600 * 48
             ], 
             'profile' => [
-                'username' => $user[0]->username,
-                'name' => $user[0]->name,
+                'username' => $user[0]['username'],
+                'name' => $user[0]['name'],
             ],
             'role' => $userRole->role['name'],
             'permissions' => $userRole->permissions
