@@ -99,7 +99,7 @@ public function index()
     }
 
     // Add sorting and pagination
-    $sql .= " ORDER BY orders.created_at DESC LIMIT ? OFFSET ?";
+    $sql .= " ORDER BY orders.created_at DESC LIMIT $pageSize OFFSET $offset";
     $params[] = $pageSize;
     $params[] = $offset;
 
