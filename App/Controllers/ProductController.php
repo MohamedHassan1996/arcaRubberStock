@@ -148,20 +148,23 @@ class ProductController extends Controller implements HasMiddleware
 
             }
 
-            foreach ($data['roleProducts'] as $key => $roleProduct) {
-
-                DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$product, $roleProduct['roleId'], $roleProduct['periodId'], $roleProduct['quantity']]);
-
-            }
-
             if(empty($data['productCodes']) || $data['rolePeoducts'][0]['roleId'] == 99) {
                 $allProductRoles = DB::raw("SELECT * FROM parameter_values WHERE deleted_at IS NULL AND parameter_id = ?", [2]);
 
                 foreach ($allProductRoles as $role) {
                     DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$product, $role['id'], $role['id'], 10000]);
                 }
+            } else{
+                foreach ($data['roleProducts'] as $key => $roleProduct) {
+
+                    DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$product, $roleProduct['roleId'], $roleProduct['periodId'], $roleProduct['quantity']]);
+
+                }
             }
 
+            
+
+            
 
             DB::commit();
 
