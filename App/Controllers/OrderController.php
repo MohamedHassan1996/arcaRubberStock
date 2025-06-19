@@ -60,58 +60,73 @@ class OrderController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index()
-    {
-        $data = request();
-        $pageSize = (int) $data['pageSize'];
-        $page = (int) $data['page'] ?? 1;
-        $offset = ($page - 1) * $pageSize;
+public function index()
+{
+    $data = request();
+    $pageSize = (int) $data['pageSize'];
+    $page = (int) ($data['page'] ?? 1);
+    $offset = ($page - 1) * $pageSize;
 
-        $filters = $data['filter'] ?? [];
+    $filters = $data['filter'] ?? [];
 
-       $sql = "SELECT 
-            orders.id AS orderId, 
-            orders.number AS orderNumber, 
-            orders.status, 
-            DATE_FORMAT(orders.created_at, '%d/%m/%Y') AS createdAt, 
-            users.name AS username
-        FROM orders 
-        LEFT JOIN users ON orders.user_id = users.id
-        WHERE orders.deleted_at IS NULL 
-        AND orders.status != ?
-        ORDER BY orders.created_at DESC
-        LIMIT $pageSize OFFSET $offset";
+    // Start building the SQL query
+    $sql = "SELECT 
+                orders.id AS orderId, 
+                orders.number AS orderNumber, 
+                orders.status, 
+                DATE_FORMAT(orders.created_at, '%d/%m/%Y') AS createdAt, 
+                users.name AS username
+            FROM orders 
+            LEFT JOIN users ON orders.user_id = users.id
+            WHERE orders.deleted_at IS NULL 
+            AND orders.status != ?";
 
-        $params = [OrderStatus::DRAFT->value];
+    $params = [OrderStatus::DRAFT->value];
 
-        if($filters['productId'] ?? null){
-            $productId = $filters['productId'];
-            $sql .= " AND orders.id IN (SELECT order_id FROM order_items WHERE product_id = ?)";
-            $params[] = $productId;
-        }
-
-        if($filters['operatorId'] ?? null){
-            $operatorId = $filters['operatorId'];
-            $sql .= " AND orders.user_id = ?";
-            $params[] = $operatorId;
-        }
-
-        $orders = DB::raw($sql, $params);
-
-        $ordersCount = DB::raw("SELECT count(*) as total FROM orders WHERE deleted_at IS NULL AND `status` != ?", [OrderStatus::DRAFT->value]);
-
-        $responseData = [
-            'orders' => $orders,
-            'pagination' => [
-                'page' => $page,
-                'pageSize' => $pageSize,
-                'totalInPage' => count($orders),
-                'total' => $ordersCount[0]['total'] ?? 0
-            ]
-        ];
-
-        return ApiResponse::success($responseData);
+    // Apply filters if provided
+    if (!empty($filters['productId'])) {
+        $sql .= " AND orders.id IN (
+                    SELECT order_id 
+                    FROM order_items 
+                    WHERE product_id = ?
+                 )";
+        $params[] = $filters['productId'];
     }
+
+    if (!empty($filters['operatorId'])) {
+        $sql .= " AND orders.user_id = ?";
+        $params[] = $filters['operatorId'];
+    }
+
+    // Add sorting and pagination
+    $sql .= " ORDER BY orders.created_at DESC LIMIT ? OFFSET ?";
+    $params[] = $pageSize;
+    $params[] = $offset;
+
+    // Fetch data
+    $orders = DB::raw($sql, $params);
+
+    // Fetch total count for pagination (without LIMIT)
+    $countSql = "SELECT COUNT(*) AS total 
+                 FROM orders 
+                 WHERE deleted_at IS NULL 
+                 AND status != ?";
+    $countParams = [OrderStatus::DRAFT->value];
+    $ordersCount = DB::raw($countSql, $countParams);
+
+    $responseData = [
+        'orders' => $orders,
+        'pagination' => [
+            'page' => $page,
+            'pageSize' => $pageSize,
+            'totalInPage' => count($orders),
+            'total' => $ordersCount[0]['total'] ?? 0
+        ]
+    ];
+
+    return ApiResponse::success($responseData);
+}
+
     public function store()
     {
 
