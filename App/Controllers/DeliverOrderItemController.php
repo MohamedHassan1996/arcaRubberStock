@@ -1,9 +1,8 @@
 <?php
 namespace App\Controllers;
 
-use App\Enums\OrderStatus;
+use App\Enums\OrderItemStatus;
 use App\Helpers\ApiResponse;
-use Core\Auth;
 use Core\Contracts\HasMiddleware;
 use Core\Controller;
 use Core\DB;
@@ -14,9 +13,8 @@ use Core\Middleware;
  *
  * PHP version 5.4
  */
-class OperatorOrderController extends Controller implements HasMiddleware
+class DeliverOrderItemController extends Controller implements HasMiddleware
 {
-
     public function __construct()
     {
     }
@@ -52,32 +50,28 @@ class OperatorOrderController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            new Middleware('permission:store_operator_order', ['index'])
+            new Middleware('permission:deliver_order_item', ['update']),
         ];
     }
 
-    public function store()
+public function update()
     {
 
         try {
             $data = request();
 
-            $user = Auth::user();
-
             DB::beginTransaction();
 
-            $orderNumber = "ORD-" . strval(date('Y') . date('m') . date('d'));
-
-            $order = DB::raw("INSERT INTO `orders` (`user_id`, `number`,`status`) VALUES (?, ?, ?)", [$user->id, $orderNumber, $data['status']], false);
-
-            foreach ($data['orderItems'] as $key => $orderItemData) {
-
-                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_id`, `quantity`) VALUES (?, ?, ?)", [$order, $orderItemData['productId'], $orderItemData['quantity']], false);
-            }
+            $orderItem = DB::raw("SELECT * FROM `order_items` WHERE id = ?", [$data['orderItemId']]);
+            
+            DB::raw("UPDATE `order_items` SET `status` = ? WHERE id = ?", [
+                OrderItemStatus::DELIVERED->value,
+                $data['orderItemId']
+            ]);
 
             DB::commit();
 
-            return ApiResponse::success('Order created successfully');
+            return ApiResponse::success('Order updated successfully');
 
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -85,6 +79,4 @@ class OperatorOrderController extends Controller implements HasMiddleware
         }
         
     }
-
-
 }

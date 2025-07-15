@@ -9,6 +9,7 @@ use Core\Contracts\HasMiddleware;
 use Core\Controller;
 use Core\DB;
 use Core\Middleware;
+use DateTime;
 
 /**
  * Home controller
@@ -61,129 +62,258 @@ class OrderItemController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index()
-    {
+    // public function index()
+    // {
+    //     $data = request();
+    //     $pageSize = (int) $data['pageSize'];
+    //     $page = (int) ($data['page'] ?? 1);
+    //     $offset = ($page - 1) * $pageSize;
+
+    //     $auth = Auth::user();
+
+    //     $statuses = $auth->role['name'] == 'operator' 
+    //         ? [OrderItemStatus::DRAFT->value]
+    //         : [OrderItemStatus::DRAFT->value, OrderItemStatus::PENDING->value, OrderItemStatus::PARTIALLY_CONFIRMED->value];
+
+    //     $placeholders = implode(',', array_fill(0, count($statuses), '?'));
+
+    //     $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.created_at as orderItemCreatedAt, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
+    //                 orders.number AS orderNumber, users.name as username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName, order_items.delivered_quantity
+    //             FROM order_items 
+    //             JOIN orders ON order_items.order_id = orders.id
+    //             JOIN users ON orders.user_id = users.id
+    //             JOIN products ON order_items.product_id = products.id
+    //             WHERE order_items.deleted_at IS NULL AND orders.deleted_at IS NULL
+    //             AND order_items.status IN ($placeholders)
+    //             LIMIT $pageSize OFFSET $offset";
+
+    //     $orderItems = DB::raw($sql, [...$statuses]);
+
+    //     $countSql = "SELECT COUNT(*) as total FROM order_items 
+    //                 WHERE deleted_at IS NULL AND status IN ($placeholders)";
+    //     $orderItemsCount = DB::raw($countSql, [...$statuses], false);
+
+    //     $orderItemsData = [];
+
+    //     foreach($orderItems as $orderItem) {
+    //         $maxTimesToOrderInPeriod = DB::raw('SELECT * FROM role_product WHERE product_id = ? AND role_id = ? AND deleted_at IS NULL', [$orderItem['productId'], $orderItem['productRoleId']]);
+
+    //         $previousOrderQuantity = 0;
+    //         if(!empty($maxTimesToOrderInPeriod)) {
+    //             $periodData = DB::raw("SELECT * FROM parameter_values WHERE id = ?", [$maxTimesToOrderInPeriod[0]['period_id']]);
+
+    //             $periodDays = (int) ($periodData[0]['description'] ?? 0);
+
+    //             $previousOrderQuantity = DB::raw("
+    //                 SELECT SUM(order_items.quantity) as totalQuantity
+    //                 FROM order_items 
+    //                 LEFT JOIN orders ON order_items.order_id = orders.id
+    //                 WHERE order_items.product_id = ?
+    //                 AND orders.user_id = ?
+    //                 AND order_items.created_at >= NOW() - INTERVAL ? DAY
+    //                 AND order_items.deleted_at IS NULL
+    //                 AND orders.deleted_at IS NULL
+    //                 AND order_items.status IN ('" . OrderItemStatus::CONFIRMED->value . "')
+    //             ", [
+    //                 $orderItem['productId'],
+    //                 $orderItem['userId'],
+    //                 $periodDays
+    //             ]);
+
+    //             $previousOrderQuantity = $previousOrderQuantity[0]['totalQuantity'] ?? 0;   
+
+    //         }
+
+    //         $orderDate = new DateTime($orderItem['orderItemCreatedAt']);
+
+    //         $orderItemsData[] = [
+    //             'orderItemId' => $orderItem['orderItemId'],
+    //             'productId' => $orderItem['productId'],
+    //             'productName' => $orderItem['productName'],
+    //             'orderItemStatus' => $orderItem['orderItemStatus'],
+    //             'quantity' => $orderItem['quantity'],
+    //             'orderId' => $orderItem['orderId'],
+    //             'orderDate' => $orderDate->format('d/m/Y'),
+    //             'orderNumber' => $orderItem['orderNumber'],
+    //             'username' => $orderItem['username'],
+    //             'maxQuantity' => $maxTimesToOrderInPeriod[0]['quantity'] ?? '-',
+    //             'previousQuantity' => (int)$previousOrderQuantity ?? 0,
+    //             'remainingQuantity' => $orderItem['quantity'] - $orderItem['delivered_quantity']
+    //         ];
+    //     }
+
+    //     $responseData = [
+    //         'orderItems' => $orderItemsData,
+    //         'pagination' => [
+    //             'page' => $page,
+    //             'pageSize' => $pageSize,
+    //             'totalInPage' => count($orderItems),
+    //             'total' => $orderItemsCount[0]['total'] ?? 0,
+    //         ]
+    //     ];
+
+    //     return ApiResponse::success($responseData);
+    // }
+
+    public function index(){
         $data = request();
-        $pageSize = (int) $data['pageSize'];
-        $page = (int) ($data['page'] ?? 1);
-        $offset = ($page - 1) * $pageSize;
+$pageSize = (int) $data['pageSize'];
+$page = (int) ($data['page'] ?? 1);
+$offset = ($page - 1) * $pageSize;
+$filters = $data['filter'] ?? [];
 
-        $auth = Auth::user();
+$auth = Auth::user();
 
-        $statuses = $auth->role['name'] != 'admin'
-            ? [OrderItemStatus::DRAFT->value]
-            : [OrderItemStatus::DRAFT->value, OrderItemStatus::PENDING->value, OrderItemStatus::PARTIALLY_CONFIRMED->value];
+$statuses = $auth->role['name'] === 'operator'
+    ? [OrderItemStatus::DRAFT->value]
+    : [
+        OrderItemStatus::DRAFT->value,
+        OrderItemStatus::PENDING->value,
+        OrderItemStatus::PARTIALLY_CONFIRMED->value
+    ];
 
-        $placeholders = implode(',', array_fill(0, count($statuses), '?'));
+$placeholders = implode(',', array_fill(0, count($statuses), '?'));
+$params = $statuses;
 
-        $sql = "SELECT order_items.id AS orderItemId, order_items.quantity, order_items.status AS orderItemStatus, orders.id AS orderId, order_items.product_id AS productId,
-                    orders.number AS orderNumber, users.name as username, users.id AS userId, users.product_role_id AS productRoleId, products.name AS productName, order_items.delivered_quantity
-                FROM order_items 
-                JOIN orders ON order_items.order_id = orders.id
-                JOIN users ON orders.user_id = users.id
-                JOIN products ON order_items.product_id = products.id
-                WHERE order_items.deleted_at IS NULL AND orders.deleted_at IS NULL
-                AND order_items.status IN ($placeholders)
-                LIMIT $pageSize OFFSET $offset";
+$whereSql = "WHERE order_items.deleted_at IS NULL 
+             AND orders.deleted_at IS NULL 
+             AND order_items.status IN ($placeholders)";
 
-        $orderItems = DB::raw($sql, [...$statuses]);
+// Apply filters
+if (!empty($filters['productId'])) {
+    $whereSql .= " AND orders.id IN (
+        SELECT order_id 
+        FROM order_items 
+        WHERE product_id = ?
+    )";
+    $params[] = $filters['productId'];
+}
 
-        $countSql = "SELECT COUNT(*) as total FROM order_items 
-                    WHERE deleted_at IS NULL AND status IN ($placeholders)";
-        $orderItemsCount = DB::raw($countSql, [...$statuses], false);
+if (!empty($filters['operatorId'])) {
+    $whereSql .= " AND orders.user_id = ?";
+    $params[] = $filters['operatorId'];
+}
 
-        $orderItemsData = [];
+if (!empty($filters['startAt']) && !empty($filters['endAt'])) {
+    $whereSql .= " AND order_items.created_at BETWEEN ? AND ?";
+    $params[] = $filters['startAt'] . ' 00:00:00';
+    $params[] = $filters['endAt'] . ' 23:59:59';
+} elseif (!empty($filters['startAt'])) {
+    $whereSql .= " AND order_items.created_at >= ?";
+    $params[] = $filters['startAt'] . ' 00:00:00';
+} elseif (!empty($filters['endAt'])) {
+    $whereSql .= " AND order_items.created_at <= ?";
+    $params[] = $filters['endAt'] . ' 23:59:59';
+}
 
-        foreach($orderItems as $orderItem) {
-            $maxTimesToOrderInPeriod = DB::raw('SELECT * FROM role_product WHERE product_id = ? AND role_id = ? AND deleted_at IS NULL', [$orderItem['productId'], $orderItem['productRoleId']]);
+// Main data query
+$sql = "SELECT 
+            order_items.id AS orderItemId,
+            order_items.quantity,
+            order_items.created_at AS orderItemCreatedAt,
+            order_items.status AS orderItemStatus,
+            orders.id AS orderId,
+            order_items.product_id AS productId,
+            orders.number AS orderNumber,
+            users.name AS username,
+            users.id AS userId,
+            users.product_role_id AS productRoleId,
+            products.name AS productName,
+            order_items.delivered_quantity
+        FROM order_items
+        JOIN orders ON order_items.order_id = orders.id
+        JOIN users ON orders.user_id = users.id
+        JOIN products ON order_items.product_id = products.id
+        $whereSql
+        LIMIT $pageSize OFFSET $offset";
 
-            $previousOrderQuantity = 0;
-            if(!empty($maxTimesToOrderInPeriod)) {
-                $periodData = DB::raw("SELECT * FROM parameter_values WHERE id = ?", [$maxTimesToOrderInPeriod[0]['period_id']]);
+$orderItems = DB::select($sql, $params);
+foreach ($orderItems as &$item) {
+    $item = (array) $item; // convert stdClass to array
+}
+unset($item);
 
+// Count query
+$countSql = "SELECT COUNT(*) as total 
+             FROM order_items 
+             JOIN orders ON order_items.order_id = orders.id
+             $whereSql";
 
-                $periodDays = (int) ($periodData[0]['description'] ?? 0);
+$countResult = DB::select($countSql, $params);
+$orderItemsCount = isset($countResult[0]) ? (array) $countResult[0] : ['total' => 0];
 
+$orderItemsData = [];
 
+foreach ($orderItems as $orderItem) {
+    $roleProductResult = DB::select(
+        'SELECT * FROM role_product WHERE product_id = ? AND role_id = ? AND deleted_at IS NULL',
+        [$orderItem['productId'], $orderItem['productRoleId']]
+    );
+    $maxTimesToOrderInPeriod = isset($roleProductResult[0]) ? (array) $roleProductResult[0] : [];
 
-                $previousOrderQuantity = DB::raw("
-                    SELECT SUM(order_items.quantity) as totalQuantity
-                    FROM order_items 
-                    LEFT JOIN orders ON order_items.order_id = orders.id
-                    WHERE order_items.product_id = ?
-                    AND orders.user_id = ?
-                    AND order_items.created_at >= NOW() - INTERVAL ? DAY
-                    AND order_items.deleted_at IS NULL
-                    AND orders.deleted_at IS NULL
-                    AND order_items.status IN ('" . OrderItemStatus::CONFIRMED->value . "')
-                ", [
-                    $orderItem['productId'],
-                    $orderItem['userId'],
-                    $periodDays
-                ]);
+    $previousOrderQuantity = 0;
 
-                $previousOrderQuantity = $previousOrderQuantity[0]['totalQuantity'] ?? 0;   
+    if (!empty($maxTimesToOrderInPeriod)) {
+        $periodResult = DB::select(
+            'SELECT * FROM parameter_values WHERE id = ?',
+            [$maxTimesToOrderInPeriod['period_id']]
+        );
+        $periodData = isset($periodResult[0]) ? (array) $periodResult[0] : [];
+        $periodDays = (int) ($periodData['description'] ?? 0);
 
-            }
+        $previous = DB::select("
+            SELECT SUM(order_items.quantity) as totalQuantity
+            FROM order_items
+            LEFT JOIN orders ON order_items.order_id = orders.id
+            WHERE order_items.product_id = ?
+            AND orders.user_id = ?
+            AND order_items.created_at >= NOW() - INTERVAL ? DAY
+            AND order_items.deleted_at IS NULL
+            AND orders.deleted_at IS NULL
+            AND order_items.status = ?
+        ", [
+            $orderItem['productId'],
+            $orderItem['userId'],
+            $periodDays,
+            OrderItemStatus::CONFIRMED->value
+        ]);
 
-
-            $orderItemsData[] = [
-                'orderItemId' => $orderItem['orderItemId'],
-                'productId' => $orderItem['productId'],
-                'productName' => $orderItem['productName'],
-                'orderItemStatus' => $orderItem['orderItemStatus'],
-                'quantity' => $orderItem['quantity'],
-                'orderId' => $orderItem['orderId'],
-                'orderNumber' => $orderItem['orderNumber'],
-                'username' => $orderItem['username'],
-                'maxQuantity' => $maxTimesToOrderInPeriod[0]['quantity'] ?? '-',
-                'previousQuantity' => (int)$previousOrderQuantity ?? 0,
-                'remainingQuantity' => $orderItem['quantity'] - $orderItem['delivered_quantity']
-            ];
-        }
-
-        $responseData = [
-            'orderItems' => $orderItemsData,
-            'pagination' => [
-                'page' => $page,
-                'pageSize' => $pageSize,
-                'totalInPage' => count($orderItems),
-                'total' => $orderItemsCount[0]['total'] ?? 0,
-            ]
-        ];
-
-        return ApiResponse::success($responseData);
+        $previous = isset($previous[0]) ? (array) $previous[0] : [];
+        $previousOrderQuantity = $previous['totalQuantity'] ?? 0;
     }
 
-    /*public function store()
-    {
+    $orderDate = new DateTime($orderItem['orderItemCreatedAt']);
 
-        try {
-            $data = request();
+    $orderItemsData[] = [
+        'orderItemId' => $orderItem['orderItemId'],
+        'productId' => $orderItem['productId'],
+        'productName' => $orderItem['productName'],
+        'orderItemStatus' => $orderItem['orderItemStatus'],
+        'quantity' => $orderItem['quantity'],
+        'orderId' => $orderItem['orderId'],
+        'orderDate' => $orderDate->format('d/m/Y'),
+        'orderNumber' => $orderItem['orderNumber'],
+        'username' => $orderItem['username'],
+        'maxQuantity' => $maxTimesToOrderInPeriod['quantity'] ?? '-',
+        'previousQuantity' => (int) $previousOrderQuantity,
+        'remainingQuantity' => $orderItem['quantity'] - $orderItem['delivered_quantity'],
+    ];
+}
 
-            $user = Auth::user();
+$responseData = [
+    'orderItems' => $orderItemsData,
+    'pagination' => [
+        'page' => $page,
+        'pageSize' => $pageSize,
+        'totalInPage' => count($orderItems),
+        'total' => $orderItemsCount['total'],
+    ]
+];
 
-            DB::beginTransaction();
+return ApiResponse::success($responseData);
 
-            $orderNumber = "ORD-" . strval(date('Y') . date('m') . date('d'));
+    }
 
-            $order = DB::raw("INSERT INTO `orders` (`user_id`, `number`,`status`) VALUES (?, ?, ?)", [$user->id, $orderNumber, $data['status']], false);
-
-            foreach ($data['orderItems'] as $key => $orderItemData) {
-
-                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_code_id`, `quantity`, `created_at`) VALUES (?, ?, ?, ?)", [$order, $orderItemData['productCodeId'], $orderItemData['quantity'], date('Y-m-d H:i:s')], false);
-            }
-
-            DB::commit();
-
-            return ApiResponse::success('Order created successfully');
-
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            throw $th;
-        }
-        
-    }*/
 
     public function show($id){
 

@@ -79,9 +79,9 @@ public function index()
             FROM orders
             LEFT JOIN users ON orders.user_id = users.id
             WHERE orders.deleted_at IS NULL
-              AND orders.status != ?";
+              ";
 
-    $params = [OrderStatus::DRAFT->value];
+    $params = [];
 
     // Optional product filter
     if (!empty($filters['productId'])) {
@@ -97,6 +97,14 @@ public function index()
     if (!empty($filters['operatorId'])) {
         $sql .= " AND orders.user_id = ?";
         $params[] = $filters['operatorId'];
+    }
+
+    if(!empty($filters['status'])){
+        $sql .= " AND orders.status IN (?)";
+        $params[] = $filters['status'];
+    } else{
+        $sql .= " AND orders.status IN (?)";
+        $params[] = [OrderStatus::CONFIRMED->value, OrderStatus::CONFIRMED->value];
     }
 
     // Finalize with ORDER and LIMIT (directly inserted as integers)

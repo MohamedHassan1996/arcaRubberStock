@@ -50,7 +50,7 @@ class ProductCodeController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            new Middleware('permission:product_codes', ['index']),
+            new Middleware('permission:all_product_codes', ['index']),
             new Middleware('permission:store_product_code', ['store']),
             new Middleware('permission:show_product_code', ['show']),
             new Middleware('permission:update_product_code', ['update']),

@@ -9,6 +9,7 @@ use Core\DB;
 class User extends Model {
     protected static $fillable = [
         'username',
+        'name',
         'password',
         'product_role_id'
     ];

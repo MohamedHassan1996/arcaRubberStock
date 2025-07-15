@@ -50,7 +50,11 @@ class RoleProductController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            //new Middleware('permission:store_operatotr_order', ['index'])
+            new Middleware('permission:all_role_poducts', ['index']),
+            new Middleware('permission:store_role_product', ['store']),
+            new Middleware('permission:show_role_product', ['show']),
+            new Middleware('permission:update_role_product', ['update']),
+            new Middleware('permission:destroy_role_product', ['destroy']),
         ];
     }
 

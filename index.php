@@ -51,12 +51,13 @@ if ($addPremssions) {
         'destroy_role_product',
 
         'all_operator_orders',
+        'store_operator_order',
 
-        'all_orders',
-        'store_order',
-        'show_order',
-        'update_order',
-        'destroy_order',
+        // 'all_orders',
+        // 'store_order',
+        // 'show_order',
+        // 'update_order',
+        // 'destroy_order',
 
         'all_stocks',
         'show_stock',
@@ -73,9 +74,15 @@ if ($addPremssions) {
         'update_order_item',
         'destroy_order_item',
 
+        'confirmed-order-items',
+
         'update_order_status',
 
         'confirm_order_item',
+
+        'deliver_order_item'
+
+        
     ];
 
     foreach ($allPermissions as $permission) {
@@ -111,17 +118,15 @@ if ($addPremssions) {
 
     // Step 6: Assign specific permissions to supervisor
     $supervisorPerms = [
-        'all_operator_orders',
-        'all_order_items',
-        'all_orders',
-        'store_order',
-        'show_order',
-        'update_order',
-        'destroy_order',
+        'store_operator_order',
         'all_products',
+
+        'all_order_items',
         'update_order_status',
         'show_order_item',
-        'update_order_item'
+        'update_order_item',
+        'confirmed-order-items',
+        'deliver_order_item'
     ];
 
     foreach ($supervisorPerms as $permName) {
@@ -181,22 +186,29 @@ $router->post('api/product-codes', 'ProductCodeController@store');
 $router->put('api/product-codes', 'ProductCodeController@update');
 $router->delete('api/product-codes/{id}', 'ProductCodeController@destroy');
 
-// Orders
-$router->get('api/orders', 'OrderController@index');
-$router->get('api/orders/{id}', 'OrderController@show');
-$router->post('api/operator-orders', 'OperatorOrderController@store');
-$router->put('api/operator-orders', 'OperatorOrderController@update');
-$router->delete('api/operator-orders', 'OperatorOrderController@destroy');
+// roleProduct
+$router->get('api/role-products', 'RoleProductController@index');
+$router->get('api/role-products/{id}', 'RoleProductController@show');
+$router->post('api/role-products', 'RoleProductController@store');
+$router->put('api/role-products', 'RoleProductController@update');
+$router->delete('api/role-products/{id}', 'RoleProductController@destroy');
+
+//Orders
+// $router->get('api/orders', 'OrderController@index');
+// $router->get('api/orders/{id}', 'OrderController@show');
+//$router->post('api/operator-orders', 'OperatorOrderController@store');
+// $router->put('api/operator-orders', 'OperatorOrderController@update');
+// $router->delete('api/operator-orders', 'OperatorOrderController@destroy');
 
 //operator orders
 $router->post('api/operator-orders', 'OperatorOrderController@store');
 
-// orders
-$router->get('api/orders', 'OrderController@index');
-$router->get('api/orders/{id}', 'OrderController@show');
-$router->post('api/orders', 'OrderController@store');
-$router->put('api/orders', 'OrderController@update');
-$router->delete('api/orders/{id}', 'OrderController@destroy');
+// // orders
+// $router->get('api/orders', 'OrderController@index');
+// $router->get('api/orders/{id}', 'OrderController@show');
+// $router->post('api/orders', 'OrderController@store');
+// $router->put('api/orders', 'OrderController@update');
+// $router->delete('api/orders/{id}', 'OrderController@destroy');
 
 
 // orderItems
@@ -206,8 +218,10 @@ $router->get('api/order-items/{id}', 'OrderItemController@show');
 $router->put('api/order-items', 'OrderItemController@update');
 $router->delete('api/order-items/{id}', 'OrderItemController@destroy');
 
+$router->get('api/confirmed-order-items', 'ConfirmedOrderItemController@index');
 // change order item status
 $router->put('api/order-item-status', 'OrderItemStatusController@update');
+$router->put('api/deliver-order-item', 'DeliverOrderItemController@update');
 
 // confirm order item
 $router->put('api/order-item-confirm', 'ConfirmOrderItemController@update');
@@ -217,12 +231,7 @@ $router->get('api/stocks', 'StockController@index');
 $router->get('api/stocks/{id}', 'StockController@show');
 $router->put('api/stocks', 'StockController@update');
 
-// roleProduct
-$router->get('api/role-products', 'RoleProductController@index');
-$router->get('api/role-products/{id}', 'RoleProductController@show');
-$router->post('api/role-products', 'RoleProductController@store');
-$router->put('api/role-products', 'RoleProductController@update');
-$router->delete('api/role-products/{id}', 'RoleProductController@destroy');
+
 
 // parameter value
 $router->get('api/parameters', 'ParameterValueController@index');

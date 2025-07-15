@@ -8,6 +8,8 @@ enum OrderItemStatus: int
     case TO_BE_ORDERED = 2;
     case CONFIRMED = 3;
 
+    case DELIVERED = 5;
+
     case PARTIALLY_CONFIRMED = 4;
     public static function values(): array
     {
