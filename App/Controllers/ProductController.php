@@ -148,7 +148,7 @@ class ProductController extends Controller implements HasMiddleware
 
             }
 
-            if(empty($data['productCodes']) || $data['rolePeoducts'][0]['roleId'] == 99) {
+            if(empty($data['productCodes']) || $data['roleProducts'][0]['roleId'] == 99) {
                 $allProductRoles = DB::raw("SELECT * FROM parameter_values WHERE deleted_at IS NULL AND parameter_id = ?", [2]);
 
                 foreach ($allProductRoles as $role) {
