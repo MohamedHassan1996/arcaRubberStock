@@ -70,11 +70,11 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
         $placeholders = implode(',', array_fill(0, count($statuses), '?'));
         $params = $statuses;
 
-        if(isset($filters['status'])){
+        if(isset($filters['status']) && $filters['status'] != null){
             $statuses = [$filters['status']];
             $placeholders = implode(',', array_fill(0, count($statuses), '?'));
             $params = $statuses;
-                    }
+        }
 
         $whereSql = "WHERE order_items.deleted_at IS NULL 
                     AND orders.deleted_at IS NULL 
