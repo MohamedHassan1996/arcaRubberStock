@@ -261,21 +261,21 @@ foreach ($orderItems as $orderItem) {
         $periodData = isset($periodResult[0]) ? (array) $periodResult[0] : [];
         $periodDays = (int) ($periodData['description'] ?? 0);
 
-        $previous = DB::select("
-            SELECT SUM(order_items.quantity) as totalQuantity
-            FROM order_items
-            LEFT JOIN orders ON order_items.order_id = orders.id
-            WHERE order_items.product_id = ?
-            AND orders.user_id = ?
-            AND order_items.created_at >= NOW() - INTERVAL ? DAY
-            AND order_items.deleted_at IS NULL
-            AND orders.deleted_at IS NULL
-            AND order_items.status IN ('" . OrderItemStatus::CONFIRMED->value . "')
-        ", [
-            $orderItem['productId'],
-            $orderItem['userId'],
-            $periodDays,
-        ]);
+        // $previous = DB::select("
+        //     SELECT SUM(order_items.quantity) as totalQuantity
+        //     FROM order_items
+        //     LEFT JOIN orders ON order_items.order_id = orders.id
+        //     WHERE order_items.product_id = ?
+        //     AND orders.user_id = ?
+        //     AND order_items.created_at >= NOW() - INTERVAL ? DAY
+        //     AND order_items.deleted_at IS NULL
+        //     AND orders.deleted_at IS NULL
+        //     AND order_items.status IN ('" . OrderItemStatus::CONFIRMED->value . "')
+        // ", [
+        //     $orderItem['productId'],
+        //     $orderItem['userId'],
+        //     $periodDays,
+        // ]);
 
         $prevStatuses = [
             OrderItemStatus::CONFIRMED->value,
@@ -291,7 +291,7 @@ foreach ($orderItems as $orderItem) {
             $orderItem['productId'],
             $orderItem['userId'],
             $periodDays,
-            ...$statuses,
+            ...$prevStatuses,
         ];
 
         $previous = DB::select("
