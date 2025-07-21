@@ -58,7 +58,7 @@ class OrderItemController extends Controller implements HasMiddleware
             //new Middleware('permission:create_order_item', ['store']),
             new Middleware('permission:show_order_item', ['show']),
             new Middleware('permission:update_order_item', ['update']),
-            new Middleware('permission:delete_order_item', ['destroy']),
+            new Middleware('permission:destroy_order_item', ['destroy']),
         ];
     }
 
@@ -270,13 +270,41 @@ foreach ($orderItems as $orderItem) {
             AND order_items.created_at >= NOW() - INTERVAL ? DAY
             AND order_items.deleted_at IS NULL
             AND orders.deleted_at IS NULL
-            AND order_items.status = ?
+            AND order_items.status IN ('" . OrderItemStatus::CONFIRMED->value . "')
         ", [
             $orderItem['productId'],
             $orderItem['userId'],
             $periodDays,
-            OrderItemStatus::CONFIRMED->value
         ]);
+
+        $prevStatuses = [
+            OrderItemStatus::CONFIRMED->value,
+            OrderItemStatus::PENDING->value,
+            OrderItemStatus::PARTIALLY_CONFIRMED->value,
+            OrderItemStatus::DELIVERED->value,
+        ];
+
+        // Prepare the placeholders (?, ?, ?, ...) for the IN clause
+        $prevPlaceholders = implode(',', array_fill(0, count($prevStatuses), '?'));
+
+        $prevBindings = [
+            $orderItem['productId'],
+            $orderItem['userId'],
+            $periodDays,
+            ...$statuses,
+        ];
+
+        $previous = DB::select("
+            SELECT SUM(order_items.quantity) as totalQuantity
+            FROM order_items
+            LEFT JOIN orders ON order_items.order_id = orders.id
+            WHERE order_items.product_id = ?
+            AND orders.user_id = ?
+            AND order_items.created_at >= NOW() - INTERVAL ? DAY
+            AND order_items.deleted_at IS NULL
+            AND orders.deleted_at IS NULL
+            AND order_items.status IN ($prevPlaceholders)
+        ", $prevBindings);
 
         $previous = isset($previous[0]) ? (array) $previous[0] : [];
         $previousOrderQuantity = $previous['totalQuantity'] ?? 0;
@@ -391,6 +419,8 @@ return ApiResponse::success($responseData);
             $data = request();
 
             DB::beginTransaction();
+
+
             
             $orderItem = DB::raw("UPDATE `order_items` SET `quantity` = ? WHERE id = ?", [
                 $data['quantity'],
@@ -413,6 +443,7 @@ return ApiResponse::success($responseData);
     {
         try {
             DB::beginTransaction();
+
             DB::raw("UPDATE `order_items` SET deleted_at = ? WHERE id = ?", [date('Y-m-d H:i:s'), $id]);
             DB::commit();
         } catch (\Throwable $th) {
