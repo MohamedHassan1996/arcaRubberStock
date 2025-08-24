@@ -120,7 +120,7 @@ class ProductCodeController extends Controller implements HasMiddleware
                     UPDATE product_codes 
                     SET description = ?, product_id = ?, deleted_at = NULL 
                     WHERE code = ?
-                ", [$data['productCodeDescription'], $data['productId'], $data['code']], false);
+                ", [$data['description'], $data['productId'], $data['code']], false);
 
                 return ApiResponse::success('Product Code created successfully');
             }
@@ -129,7 +129,7 @@ class ProductCodeController extends Controller implements HasMiddleware
             DB::raw("
                 INSERT INTO product_codes (`code`, `product_id`, `description`) 
                 VALUES (?, ?, ?)
-            ", [$data['code'], $data['productId'], $data['productCodeDescription']], false);
+            ", [$data['code'], $data['productId'], $data['description']], false);
 
             // Get last inserted id (works in MySQL)
             $productCodeId = DB::raw("SELECT LAST_INSERT_ID() as id", [], false)[0]->id;
@@ -178,7 +178,7 @@ class ProductCodeController extends Controller implements HasMiddleware
 
             $data = request();
 
-            $productCode = DB::raw("UPDATE `product_codes` SET `code` = ?, `description` = ? WHERE id = ?", [$data['code'], $data['productCodeDescription'], $data['productCodeId']]);
+            $productCode = DB::raw("UPDATE `product_codes` SET `code` = ?, `description` = ? WHERE id = ?", [$data['code'], $data['description'], $data['productCodeId']]);
 
             DB::commit();
 
