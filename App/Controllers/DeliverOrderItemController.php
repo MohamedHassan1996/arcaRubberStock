@@ -63,11 +63,28 @@ public function update()
             DB::beginTransaction();
 
             $orderItem = DB::raw("SELECT * FROM `order_items` WHERE id = ?", [$data['orderItemId']]);
-            
-            DB::raw("UPDATE `order_items` SET `status` = ? WHERE id = ?", [
+
+            DB::raw("UPDATE `out_stocks` SET `status` = ? WHERE id = ?", [
                 OrderItemStatus::DELIVERED->value,
-                $data['orderItemId']
+                $data['outStockId']
             ]);
+
+            $allOutStocks = DB::raw("SELECT * FROM `out_stocks` WHERE order_item_id = ?", [$data['orderItemId']]);
+
+            $allDelivered = true;
+            
+            foreach ($allOutStocks as $outStock) {
+                if ($outStock['status'] != OrderItemStatus::DELIVERED->value) {
+                    $allDelivered = false;
+                }
+            }
+
+            if ($allDelivered) {
+                DB::raw("UPDATE `order_items` SET `status` = ? WHERE id = ?", [
+                    OrderItemStatus::DELIVERED->value,
+                    $data['orderItemId']
+                ]);
+            }
 
             DB::commit();
 

@@ -66,7 +66,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
 
         $auth = Auth::user();
 
-        $statuses = [OrderItemStatus::CONFIRMED->value];
+        $statuses = [OrderItemStatus::CONFIRMED->value, OrderItemStatus::PARTIALLY_CONFIRMED->value];
         $placeholders = implode(',', array_fill(0, count($statuses), '?'));
         $params = $statuses;
 
@@ -114,7 +114,9 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
         }
 
         // Main data query
-        $sql = "SELECT 
+        $sql = "SELECT out_stocks.id AS outStockId,
+                    out_stocks.status AS outStockStatus,
+                    out_stocks.quantity AS outStockQuantity,
                     order_items.id AS orderItemId,
                     order_items.quantity,
                     order_items.note AS orderItemNote,
@@ -129,7 +131,8 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
                     products.name AS productName,
                     products.description AS productDescription,
                     order_items.delivered_quantity
-                FROM order_items
+                FROM out_stocks
+                JOIN order_items ON out_stocks.order_item_id = order_items.id
                 JOIN orders ON order_items.order_id = orders.id
                 JOIN users ON orders.user_id = users.id
                 JOIN products ON order_items.product_id = products.id
@@ -144,10 +147,13 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
         unset($item);
 
         // Count query
-        $countSql = "SELECT COUNT(*) as total 
-                    FROM order_items 
-                    JOIN orders ON order_items.order_id = orders.id
-                    $whereSql";
+        $countSql = "SELECT COUNT(*) as total
+                FROM out_stocks
+                JOIN order_items ON out_stocks.order_item_id = order_items.id
+                JOIN orders ON order_items.order_id = orders.id
+                JOIN users ON orders.user_id = users.id
+                JOIN products ON order_items.product_id = products.id
+                $whereSql";
 
         $countResult = DB::select($countSql, $params);
         $orderItemsCount = isset($countResult[0]) ? (array) $countResult[0] : ['total' => 0];
