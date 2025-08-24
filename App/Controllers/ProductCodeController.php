@@ -131,8 +131,14 @@ class ProductCodeController extends Controller implements HasMiddleware
                 VALUES (?, ?, ?)
             ", [$data['code'], $data['productId'], $data['description']], false);
 
-            // Get last inserted id (works in MySQL)
-            $productCodeId = DB::raw("SELECT LAST_INSERT_ID() as id", [], false)[0]->id;
+
+            $productCodeId = DB::raw("
+        SELECT id FROM product_codes WHERE code = ?
+    ", [$data['code']]);
+
+
+
+    $productCodeId = $productCodeId[0]['id'] ?? 0;
 
             // Insert into stocks
             DB::raw("
