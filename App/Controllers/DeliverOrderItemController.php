@@ -72,14 +72,14 @@ public function update()
             $allOutStocks = DB::raw("SELECT * FROM `out_stocks` WHERE order_item_id = ?", [$data['orderItemId']]);
 
             $allDelivered = true;
-            
+
             foreach ($allOutStocks as $outStock) {
                 if ($outStock['status'] != OrderItemStatus::DELIVERED->value) {
                     $allDelivered = false;
                 }
             }
 
-            if ($allDelivered) {
+            if ($allDelivered && $orderItem[0]['quantity'] == $orderItem[0]['delivered_quantity']) {
                 DB::raw("UPDATE `order_items` SET `status` = ? WHERE id = ?", [
                     OrderItemStatus::DELIVERED->value,
                     $data['orderItemId']
