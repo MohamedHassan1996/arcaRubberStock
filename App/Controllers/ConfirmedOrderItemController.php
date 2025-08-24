@@ -66,7 +66,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
 
         $auth = Auth::user();
 
-        $statuses = [OrderItemStatus::CONFIRMED->value, OrderItemStatus::PARTIALLY_CONFIRMED->value];
+        $statuses = [0, 5];
         $placeholders = implode(',', array_fill(0, count($statuses), '?'));
         $params = $statuses;
 
@@ -78,7 +78,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
 
         $whereSql = "WHERE order_items.deleted_at IS NULL 
                     AND orders.deleted_at IS NULL 
-                    AND order_items.status IN ($placeholders)";
+                    AND out_stocks.status IN ($placeholders)";
 
  
 
@@ -215,7 +215,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
                 'productName' => $orderItem['productName'],
                 'productDescription' => $orderItem['productDescription']??'',
                 'orderItemNote' => $orderItem['orderItemNote'] ?? '',
-                'orderItemStatus' => $orderItem['orderItemStatus'],
+                'orderItemStatus' => $orderItem['outStockStatus'] == 5 ? 5 : $orderItem['orderItemStatus'],
                 'quantity' => $orderItem['outStockQuantity'] ?? 0,
                 'orderId' => $orderItem['orderId'],
                 'orderDate' => $orderDate->format('d/m/Y'),
