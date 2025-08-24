@@ -110,7 +110,7 @@ class StockController extends Controller implements HasMiddleware
    
     public function show($id){
 
-        $sql = "SELECT stocks.id AS stockId, product_codes.code AS productCode, stocks.quantity, products.name as productName
+        $sql = "SELECT stocks.id AS stockId, product_codes.id AS productCodeId, product_codes.code AS productCode, product_codes.description AS productCodeDescription, stocks.quantity, products.name as productName
         FROM stocks 
         LEFT JOIN product_codes ON stocks.product_code_id = product_codes.id
         LEFT JOIN products ON product_codes.product_id = products.id
@@ -130,6 +130,8 @@ class StockController extends Controller implements HasMiddleware
             $data = request();
 
             DB::beginTransaction();
+
+            DB::raw("UPDATE product_codes SET description = ? WHERE id = ?", [$data['description'], $data['productCodeId']]);
 
             $stock = DB::raw("UPDATE `stocks` SET `quantity` = ? WHERE id = ?", [$data['quantity'], $data['stockId']]);
 
