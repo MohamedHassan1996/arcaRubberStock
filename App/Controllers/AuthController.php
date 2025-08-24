@@ -79,7 +79,7 @@ class AuthController extends Controller implements HasMiddleware
         return ApiResponse::success([
             'tokenDetails' => [
                 'token' => $token,
-                'expiresAt' => 3600 * 48
+                'expiresAt' => 3600 * 24
             ], 
             'profile' => [
                 'username' => $user[0]['username'],

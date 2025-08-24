@@ -19,7 +19,7 @@ class JWT
 
         self::$secret = $config['secret'];
         self::$algo   = $config['algo'];
-        self::$ttl    = $config['ttl'];
+        self::$ttl    = $config['ttl'] ?? 3600 * 8;
 
         // Define the blacklist file path
         self::$blacklistFile = __DIR__ . '/../storage/jwt_blacklist.json';
