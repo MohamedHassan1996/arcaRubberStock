@@ -113,6 +113,8 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
             $params[] = $filters['endAt'] . ' 23:59:59';
         }
 
+        $whereSql .= " AND out_stocks.status != 5";
+
         // Main data query
         $sql = "SELECT out_stocks.id AS outStockId,
                     out_stocks.status AS outStockStatus,

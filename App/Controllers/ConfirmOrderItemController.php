@@ -73,7 +73,7 @@ class ConfirmOrderItemController extends Controller implements HasMiddleware
             if($deliveredQuantity == $quantity){
                 $status = OrderItemStatus::CONFIRMED->value;
             } elseif($deliveredQuantity > 0) {
-                $status = OrderItemStatus::PARTIALLY_CONFIRMED->value;
+                $status = OrderItemStatus::PENDING->value;
             }else {
                 $status = $orderItem[0]['status'];
             }
