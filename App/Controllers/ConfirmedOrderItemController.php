@@ -127,6 +127,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
                     users.id AS userId,
                     users.product_role_id AS productRoleId,
                     products.name AS productName,
+                    products.description AS productDescription,
                     order_items.delivered_quantity
                 FROM order_items
                 JOIN orders ON order_items.order_id = orders.id
