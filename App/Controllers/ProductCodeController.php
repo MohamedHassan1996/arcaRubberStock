@@ -137,7 +137,6 @@ class ProductCodeController extends Controller implements HasMiddleware
     ", [$data['code']]);
 
 
-
     $productCodeId = $productCodeId[0]['id'] ?? 0;
 
             // Insert into stocks
@@ -145,6 +144,8 @@ class ProductCodeController extends Controller implements HasMiddleware
                 INSERT INTO stocks (`product_code_id`, `quantity`) 
                 VALUES (?, ?)
             ", [$productCodeId, 0], false);
+
+            DB::commit();
 
             return ApiResponse::success('Product Code created successfully');
 
