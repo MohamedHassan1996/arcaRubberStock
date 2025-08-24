@@ -202,6 +202,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
 
             $orderItemsData[] = [
                 'orderItemId' => $orderItem['orderItemId'],
+                'outStockId' => $orderItem['outStockId'],
                 'productId' => $orderItem['productId'],
                 'productName' => $orderItem['productName'],
                 'productDescription' => $orderItem['productDescription']??'',
