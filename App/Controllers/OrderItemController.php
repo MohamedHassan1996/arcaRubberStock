@@ -157,81 +157,88 @@ class OrderItemController extends Controller implements HasMiddleware
 
     public function index(){
         $data = request();
-$pageSize = (int) $data['pageSize'];
-$page = (int) ($data['page'] ?? 1);
-$offset = ($page - 1) * $pageSize;
-$filters = $data['filter'] ?? [];
+        $pageSize = (int) $data['pageSize'];
+        $page = (int) ($data['page'] ?? 1);
+        $offset = ($page - 1) * $pageSize;
+        $filters = $data['filter'] ?? [];
 
-$auth = Auth::user();
+        $auth = Auth::user();
 
-$statuses = $auth->role['name'] === 'operator'
-    ? [OrderItemStatus::DRAFT->value]
-    : [
-        OrderItemStatus::DRAFT->value,
-        OrderItemStatus::PENDING->value,
-        OrderItemStatus::PARTIALLY_CONFIRMED->value
-    ];
+        $statuses = $auth->role['name'] === 'operator'
+            ? [OrderItemStatus::DRAFT->value]
+            : [
+                OrderItemStatus::DRAFT->value,
+                OrderItemStatus::PENDING->value,
+                OrderItemStatus::PARTIALLY_CONFIRMED->value
+            ];
 
-$placeholders = implode(',', array_fill(0, count($statuses), '?'));
-$params = $statuses;
+        $placeholders = implode(',', array_fill(0, count($statuses), '?'));
+        $params = $statuses;
 
-$whereSql = "WHERE order_items.deleted_at IS NULL 
-             AND orders.deleted_at IS NULL 
-             AND order_items.status IN ($placeholders)";
+        $whereSql = "WHERE order_items.deleted_at IS NULL 
+                    AND orders.deleted_at IS NULL 
+                    AND order_items.status IN ($placeholders)";
 
-// Apply filters
-if (!empty($filters['productId'])) {
-    $whereSql .= " AND orders.id IN (
-        SELECT order_id 
-        FROM order_items 
-        WHERE product_id = ?
-    )";
-    $params[] = $filters['productId'];
-}
+        // Apply filters
+        // if (!empty($filters['productId'])) {
+        //     $whereSql .= " AND orders.id IN (
+        //         SELECT order_id 
+        //         FROM order_items 
+        //         WHERE product_id = ?
+        //     )";
+        //     $params[] = $filters['productId'];
+        // }
 
-if (!empty($filters['operatorId'])) {
-    $whereSql .= " AND orders.user_id = ?";
-    $params[] = $filters['operatorId'];
-}
+        if (!empty($filters['productId'])) {
+            $whereSql .= " AND order_items.product_id = ?";
+            $params[] = $filters['productId'];
+        }
 
-if (!empty($filters['startAt']) && !empty($filters['endAt'])) {
-    $whereSql .= " AND order_items.created_at BETWEEN ? AND ?";
-    $params[] = $filters['startAt'] . ' 00:00:00';
-    $params[] = $filters['endAt'] . ' 23:59:59';
-} elseif (!empty($filters['startAt'])) {
-    $whereSql .= " AND order_items.created_at >= ?";
-    $params[] = $filters['startAt'] . ' 00:00:00';
-} elseif (!empty($filters['endAt'])) {
-    $whereSql .= " AND order_items.created_at <= ?";
-    $params[] = $filters['endAt'] . ' 23:59:59';
-}
+        if (!empty($filters['operatorId'])) {
+            $whereSql .= " AND orders.user_id = ?";
+            $params[] = $filters['operatorId'];
+        }
 
-// Main data query
-$sql = "SELECT 
-            order_items.id AS orderItemId,
-            order_items.quantity,
-            order_items.created_at AS orderItemCreatedAt,
-            order_items.status AS orderItemStatus,
-            orders.id AS orderId,
-            order_items.product_id AS productId,
-            orders.number AS orderNumber,
-            users.name AS username,
-            users.id AS userId,
-            users.product_role_id AS productRoleId,
-            products.name AS productName,
-            order_items.delivered_quantity
-        FROM order_items
-        JOIN orders ON order_items.order_id = orders.id
-        JOIN users ON orders.user_id = users.id
-        JOIN products ON order_items.product_id = products.id
-        $whereSql
-        LIMIT $pageSize OFFSET $offset";
+        if (!empty($filters['startAt']) && !empty($filters['endAt'])) {
+            $whereSql .= " AND order_items.created_at BETWEEN ? AND ?";
+            $params[] = $filters['startAt'] . ' 00:00:00';
+            $params[] = $filters['endAt'] . ' 23:59:59';
+        } elseif (!empty($filters['startAt'])) {
+            $whereSql .= " AND order_items.created_at >= ?";
+            $params[] = $filters['startAt'] . ' 00:00:00';
+        } elseif (!empty($filters['endAt'])) {
+            $whereSql .= " AND order_items.created_at <= ?";
+            $params[] = $filters['endAt'] . ' 23:59:59';
+        }
 
-$orderItems = DB::select($sql, $params);
-foreach ($orderItems as &$item) {
-    $item = (array) $item; // convert stdClass to array
-}
-unset($item);
+        // Main data query
+        $sql = "SELECT 
+                    order_items.id AS orderItemId,
+                    order_items.quantity,
+                    order_items.note AS orderItemNote,
+                    order_items.created_at AS orderItemCreatedAt,
+                    order_items.status AS orderItemStatus,
+                    orders.id AS orderId,
+                    order_items.product_id AS productId,
+                    orders.number AS orderNumber,
+                    users.name AS username,
+                    users.id AS userId,
+                    users.product_role_id AS productRoleId,
+                    products.name AS productName,
+                    order_items.delivered_quantity
+                FROM order_items
+                JOIN orders ON order_items.order_id = orders.id
+                JOIN users ON orders.user_id = users.id
+                JOIN products ON order_items.product_id = products.id
+                $whereSql
+                ORDER BY order_items.created_at DESC
+                LIMIT $pageSize OFFSET $offset";
+
+        $orderItems = DB::select($sql, $params);
+        foreach ($orderItems as &$item) {
+            $item = (array) $item; // convert stdClass to array
+        }
+        unset($item);
 
 // Count query
 $countSql = "SELECT COUNT(*) as total 
@@ -316,6 +323,7 @@ foreach ($orderItems as $orderItem) {
         'orderItemId' => $orderItem['orderItemId'],
         'productId' => $orderItem['productId'],
         'productName' => $orderItem['productName'],
+        'orderItemNote' => $orderItem['orderItemNote']??"",
         'orderItemStatus' => $orderItem['orderItemStatus'],
         'quantity' => $orderItem['quantity'],
         'orderId' => $orderItem['orderId'],

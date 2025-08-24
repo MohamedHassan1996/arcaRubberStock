@@ -91,7 +91,7 @@ class RoleProductController extends Controller implements HasMiddleware
 
             DB::commit();
 
-            return ApiResponse::success('Product created successfully');
+            return ApiResponse::success('Product Role created successfully');
 
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -121,7 +121,7 @@ class RoleProductController extends Controller implements HasMiddleware
 
             DB::commit();
 
-            return ApiResponse::success('Product updated successfully');
+            return ApiResponse::success('Product Role updated successfully');
 
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -142,7 +142,7 @@ class RoleProductController extends Controller implements HasMiddleware
             DB::rollBack();
             throw $th;
         }
-        return ApiResponse::success('Order deleted successfully');
+        return ApiResponse::success('Product Role deleted successfully');
     }
 
 }

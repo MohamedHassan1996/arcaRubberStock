@@ -63,7 +63,7 @@ class StockController extends Controller implements HasMiddleware
 
         $filters = $data['filter'] ?? [];
 
-        $sql = "SELECT stocks.id AS stockId, product_codes.code AS productCode, stocks.quantity, products.name as productName
+        $sql = "SELECT stocks.id AS stockId, product_codes.code AS productCode, stocks.quantity, products.name as productName, product_codes.description AS productCodeDescription
                 FROM stocks 
                 JOIN product_codes ON stocks.product_code_id = product_codes.id
                 JOIN products ON product_codes.product_id = products.id
@@ -90,6 +90,10 @@ class StockController extends Controller implements HasMiddleware
         $sql .= " LIMIT $pageSize OFFSET $offset";
 
         $productCodes = DB::raw($sql, $params);
+
+        foreach ($productCodes as &$productCode) {
+            $productCode['productCodeDescription'] = $productCode['productCodeDescription']??'';
+        }
 
         $responseData = [
             'products' => $productCodes,

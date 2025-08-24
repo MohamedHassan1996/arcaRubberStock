@@ -61,7 +61,7 @@ class ProductCodeController extends Controller implements HasMiddleware
     public function index()
     {
         $data = request();
-        $sql = "SELECT id AS productCodeId, `code` 
+        $sql = "SELECT id AS productCodeId, `code`, `description` AS productCodeDescription
                 FROM product_codes
                 WHERE product_id = ? AND
                 deleted_at IS NULL";
@@ -82,20 +82,67 @@ class ProductCodeController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
-            $productCode = DB::raw(
-                "INSERT INTO `product_codes` (`code`, `product_id`) VALUES (?, ?)",
-                [$data['code'], $data['productId']],
-                false
-            );
+            // $productCode = DB::raw(
+            //     "INSERT INTO `product_codes` (`code`, `product_id`, `description`) VALUES (?, ?, ?)",
+            //     [$data['code'], $data['productId'], $data['productCodeDescription']],
+            //     false
+            // );
 
-            DB::raw(
-                "INSERT INTO `stocks` (`product_code_id`, `quantity`) VALUES (?, ?)",
-                [$productCode, 0],
-            );
+            // DB::raw(
+            //     "INSERT INTO `stocks` (`product_code_id`, `quantity`) VALUES (?, ?)",
+            //     [$productCode, 0],
+            // );
 
-            DB::commit();
+            // 1 - Check if code exists and not deleted
+            $exists = DB::raw("
+                SELECT id 
+                FROM product_codes 
+                WHERE code = ? AND deleted_at IS NULL 
+                LIMIT 1
+            ", [$data['code']], false);
 
-            return ApiResponse::success('Product created successfully');
+            if (!empty($exists)) {
+                // Case 1: code exists and not deleted
+                return ApiResponse::error('Product Code already exists');
+            }
+
+            // 2 - Check if code exists but deleted
+            $deleted = DB::raw("
+                SELECT id 
+                FROM product_codes 
+                WHERE code = ? AND deleted_at IS NOT NULL 
+                LIMIT 1
+            ", [$data['code']], false);
+
+            if (!empty($deleted)) {
+                // Case 2: Update existing deleted code
+                DB::raw("
+                    UPDATE product_codes 
+                    SET description = ?, product_id = ?, deleted_at = NULL 
+                    WHERE code = ?
+                ", [$data['productCodeDescription'], $data['productId'], $data['code']], false);
+
+                return ApiResponse::success('Product Code created successfully');
+            }
+
+            // 3 - Insert new product_code
+            DB::raw("
+                INSERT INTO product_codes (`code`, `product_id`, `description`) 
+                VALUES (?, ?, ?)
+            ", [$data['code'], $data['productId'], $data['productCodeDescription']], false);
+
+            // Get last inserted id (works in MySQL)
+            $productCodeId = DB::raw("SELECT LAST_INSERT_ID() as id", [], false)[0]->id;
+
+            // Insert into stocks
+            DB::raw("
+                INSERT INTO stocks (`product_code_id`, `quantity`) 
+                VALUES (?, ?)
+            ", [$productCodeId, 0], false);
+
+            return ApiResponse::success('Product Code created successfully');
+
+
 
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -111,6 +158,7 @@ class ProductCodeController extends Controller implements HasMiddleware
         $responseData = [
             'productCodeId' => $id,
             'code' => $productData[0]['code'],
+            'productCodeDescription' => $productData[0]['description'],
             'productId' =>  $productData[0]['product_id'],
         ];
 
@@ -130,7 +178,7 @@ class ProductCodeController extends Controller implements HasMiddleware
 
             $data = request();
 
-            $productCode = DB::raw("UPDATE `product_codes` SET `code` = ? WHERE id = ?", [$data['code'], $data['productCodeId']]);
+            $productCode = DB::raw("UPDATE `product_codes` SET `code` = ?, `description` = ? WHERE id = ?", [$data['code'], $data['productCodeDescription'], $data['productCodeId']]);
 
             DB::commit();
 
@@ -148,8 +196,8 @@ class ProductCodeController extends Controller implements HasMiddleware
         try {
             DB::beginTransaction();
             DB::raw("UPDATE `product_codes` SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
-            DB::raw("UPDATE `in_stocks` SET deleted_at = ? WHERE product_code_id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
-            DB::raw("UPDATE `stocks` SET deleted_at = ? WHERE product_code_id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
+            //DB::raw("UPDATE `in_stocks` SET deleted_at = ? WHERE product_code_id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
+            //DB::raw("UPDATE `stocks` SET deleted_at = ? WHERE product_code_id = ? AND deleted_at IS NULL", [date('Y-m-d H:i:s'), $id]);
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();

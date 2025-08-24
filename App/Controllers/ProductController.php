@@ -137,30 +137,99 @@ class ProductController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
-            $product = DB::raw("INSERT INTO `products` (`name`, `description`, `min_quantity`) VALUES (?, ?, ?)", [$data['name'], $data['description'], $data['minQuantity']], false);
+                // $product = DB::raw("INSERT INTO `products` (`name`, `description`, `min_quantity`) VALUES (?, ?, ?)", [$data['name'], $data['description'], $data['minQuantity']], false);
 
-            foreach ($data['productCodes'] as $key => $productCodeData) {
+                // foreach ($data['productCodes'] as $key => $productCodeData) {
 
-                $productCode = DB::raw("INSERT INTO `product_codes` (`product_id`, `code`) VALUES (?, ?)", [$product, $productCodeData['code']], false);
+                //     $productCode = DB::raw("INSERT INTO `product_codes` (`product_id`, `code`, `description`) VALUES (?, ?, ?)", [$product, $productCodeData['code'], $productCodeData['description']], false);
 
-                DB::raw("INSERT INTO `stocks` (`product_code_id`, `quantity`) VALUES (?, ?)", [$productCode, 0], false);
+                //     DB::raw("INSERT INTO `stocks` (`product_code_id`, `quantity`) VALUES (?, ?)", [$productCode, 0], false);
 
+
+                // }
+
+            // Insert product
+$productId = DB::raw("
+    INSERT INTO products (name, description, min_quantity)
+    VALUES (?, ?, ?)
+", [$data['name'], $data['description'], $data['minQuantity']], false);
+
+
+// loop product codes
+foreach ($data['productCodes'] as $productCodeData) {
+
+        // 2. Fail if exists and not deleted
+    $exists = DB::raw("
+        SELECT 1
+        FROM product_codes
+        WHERE code = ? AND deleted_at IS NULL
+        LIMIT 1
+    ", [$productCodeData['code']], true); // true = fetch results
+    
+
+    if (!empty($exists)) {
+        return ApiResponse::error("Product code '{$productCodeData['code']}' already exists.");
+
+    }
+
+    // 1. Try update if exists but deleted
+    DB::raw("
+        UPDATE product_codes
+        SET description = ?, product_id = ?, deleted_at = NULL
+        WHERE code = ? AND deleted_at IS NOT NULL
+    ", [$productCodeData['description'], $productId, $productCodeData['code']]);
+
+    $productCodeId = DB::raw("
+        SELECT id FROM product_codes WHERE code = ?
+    ", [$productCodeData['code']]);
+
+    $productCodeId = $productCodeId[0]['id'] ?? 0;
+
+    //debug($productId);
+    // 3. Insert if not updated and not exists
+    if ($productCodeId === 0) {
+        $productCodeId = DB::raw("
+            INSERT INTO product_codes (product_id, code, description)
+            VALUES (?, ?, ?)
+        ", [$productId, $productCodeData['code'], $productCodeData['description']], false);
+    }
+
+    $check = DB::raw("
+        SELECT id 
+        FROM stocks 
+        WHERE product_code_id = $productCodeId
+        LIMIT 1
+    ");
+
+
+    // 2. If not found → insert
+    if (empty($check)) {
+        DB::raw("INSERT INTO stocks (product_code_id, quantity) VALUES ($productCodeId, 0)");
+    }
+
+
+}
+
+
+            foreach ($data['roleProducts'] as $key => $roleProduct) {
+
+                    DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$productId, $roleProduct['roleId'], $roleProduct['periodId'], $roleProduct['quantity']]);
 
             }
 
-            if(empty($data['productCodes']) || $data['roleProducts'][0]['roleId'] == 99) {
-                $allProductRoles = DB::raw("SELECT * FROM parameter_values WHERE deleted_at IS NULL AND parameter_id = ?", [2]);
+            // if(empty($data['productCodes']) || $data['roleProducts'][0]['roleId'] == 99) {
+            //     $allProductRoles = DB::raw("SELECT * FROM parameter_values WHERE deleted_at IS NULL AND parameter_id = ?", [2]);
 
-                foreach ($allProductRoles as $role) {
-                    DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$product, $role['id'], $role['id'], 10000]);
-                }
-            } else{
-                foreach ($data['roleProducts'] as $key => $roleProduct) {
+            //     foreach ($allProductRoles as $role) {
+            //         DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$productId, $role['id'], $role['id'], 10000]);
+            //     }
+            // } else{
+            //     foreach ($data['roleProducts'] as $key => $roleProduct) {
 
-                    DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$product, $roleProduct['roleId'], $roleProduct['periodId'], $roleProduct['quantity']]);
+            //         DB::raw("INSERT INTO `role_product` (`product_id`, `role_id`, `period_id`, `quantity`) VALUES (?, ?, ?, ?)", [$productId, $roleProduct['roleId'], $roleProduct['periodId'], $roleProduct['quantity']]);
 
-                }
-            }
+            //     }
+            // }
 
             
 
@@ -181,7 +250,7 @@ class ProductController extends Controller implements HasMiddleware
 
         $productData = DB::raw("SELECT * FROM products WHERE id = ? AND deleted_at IS NULL", [$id]);
 
-        $productCodesData = DB::raw("SELECT id as productCodeId, code as code FROM product_codes WHERE product_id = ?", [$id]);
+        $productCodesData = DB::raw("SELECT id as productCodeId, code as code, `description` as productCodeDescription FROM product_codes WHERE product_id = ?", [$id]);
 
         $productResponse = [
             'productId' => $id,

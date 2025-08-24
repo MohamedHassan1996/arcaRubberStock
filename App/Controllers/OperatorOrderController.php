@@ -1,7 +1,6 @@
 <?php
 namespace App\Controllers;
 
-use App\Enums\OrderStatus;
 use App\Helpers\ApiResponse;
 use Core\Auth;
 use Core\Contracts\HasMiddleware;
@@ -66,13 +65,13 @@ class OperatorOrderController extends Controller implements HasMiddleware
 
             DB::beginTransaction();
 
-            $orderNumber = "ORD-" . strval(date('Y') . date('m') . date('d'));
+            $orderNumber = "ORD-" . date('dmyHis') . $user->id;
 
             $order = DB::raw("INSERT INTO `orders` (`user_id`, `number`,`status`) VALUES (?, ?, ?)", [$user->id, $orderNumber, $data['status']], false);
 
             foreach ($data['orderItems'] as $key => $orderItemData) {
 
-                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_id`, `quantity`) VALUES (?, ?, ?)", [$order, $orderItemData['productId'], $orderItemData['quantity']], false);
+                $orderItem = DB::raw("INSERT INTO `order_items` (`order_id`, `product_id`, `quantity`, 'note') VALUES (?, ?, ?, ?)", [$order, $orderItemData['productId'], $orderItemData['quantity'], $orderItemData['note']], false);
             }
 
             DB::commit();

@@ -81,12 +81,17 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
                     AND order_items.status IN ($placeholders)";
 
         // Apply filters
+        // if (!empty($filters['productId'])) {
+        //     $whereSql .= " AND orders.id IN (
+        //         SELECT order_id 
+        //         FROM order_items 
+        //         WHERE product_id = ?
+        //     )";
+        //     $params[] = $filters['productId'];
+        // }
+
         if (!empty($filters['productId'])) {
-            $whereSql .= " AND orders.id IN (
-                SELECT order_id 
-                FROM order_items 
-                WHERE product_id = ?
-            )";
+            $whereSql .= " AND order_items.product_id = ?";
             $params[] = $filters['productId'];
         }
 
@@ -112,6 +117,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
         $sql = "SELECT 
                     order_items.id AS orderItemId,
                     order_items.quantity,
+                    order_items.note AS orderItemNote,
                     order_items.created_at AS orderItemCreatedAt,
                     order_items.status AS orderItemStatus,
                     orders.id AS orderId,
@@ -127,7 +133,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
                 JOIN users ON orders.user_id = users.id
                 JOIN products ON order_items.product_id = products.id
                 $whereSql
-                order by products.name ASC, order_items.created_at ASC LIMIT $pageSize OFFSET $offset";
+                order by order_items.created_at ASC, products.name ASC LIMIT $pageSize OFFSET $offset";
 
 
         $orderItems = DB::select($sql, $params);
@@ -191,6 +197,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
                 'orderItemId' => $orderItem['orderItemId'],
                 'productId' => $orderItem['productId'],
                 'productName' => $orderItem['productName'],
+                'orderItemNote' => $orderItem['orderItemNote'] ?? '',
                 'orderItemStatus' => $orderItem['orderItemStatus'],
                 'quantity' => $orderItem['quantity'],
                 'orderId' => $orderItem['orderId'],
