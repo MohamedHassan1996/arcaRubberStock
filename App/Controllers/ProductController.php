@@ -183,7 +183,10 @@ foreach ($data['productCodes'] as $productCodeData) {
         SELECT id FROM product_codes WHERE code = ?
     ", [$productCodeData['code']]);
 
+
+
     $productCodeId = $productCodeId[0]['id'] ?? 0;
+
 
     //debug($productId);
     // 3. Insert if not updated and not exists
@@ -194,6 +197,7 @@ foreach ($data['productCodes'] as $productCodeData) {
         ", [$productId, $productCodeData['code'], $productCodeData['description']], false);
     }
 
+
     $check = DB::raw("
         SELECT id 
         FROM stocks 
@@ -202,9 +206,11 @@ foreach ($data['productCodes'] as $productCodeData) {
     ");
 
 
+
+
     // 2. If not found → insert
     if (empty($check)) {
-        DB::raw("INSERT INTO stocks (product_code_id, quantity) VALUES ($productCodeId, 0)");
+        DB::raw("INSERT INTO stocks (product_code_id, quantity) VALUES (?, ?)", [$productCodeId, 0]);
     }
 
 
