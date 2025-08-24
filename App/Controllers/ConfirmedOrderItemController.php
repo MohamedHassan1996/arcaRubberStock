@@ -80,9 +80,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
                     AND orders.deleted_at IS NULL 
                     AND order_items.status IN ($placeholders)";
 
-        if(!isset($filters['status']) && $filters['status'] == null){
-            $whereSql .= " AND out_stocks.status != 5";
-        }
+ 
 
         // Apply filters
         // if (!empty($filters['productId'])) {
@@ -115,6 +113,11 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
         } elseif (!empty($filters['endAt'])) {
             $whereSql .= " AND order_items.created_at <= ?";
             $params[] = $filters['endAt'] . ' 23:59:59';
+        }
+
+
+        if($filters['status'] == null){
+            $whereSql .= " AND out_stocks.status != 5";
         }
 
 
