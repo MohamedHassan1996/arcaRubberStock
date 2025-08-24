@@ -66,7 +66,7 @@ class ConfirmedOrderItemController extends Controller implements HasMiddleware
 
         $auth = Auth::user();
 
-        $statuses = [OrderItemStatus::CONFIRMED->value, OrderItemStatus::DELIVERED->value];
+        $statuses = [OrderItemStatus::CONFIRMED->value];
         $placeholders = implode(',', array_fill(0, count($statuses), '?'));
         $params = $statuses;
 
