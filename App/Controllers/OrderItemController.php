@@ -164,7 +164,7 @@ class OrderItemController extends Controller implements HasMiddleware
 
         $auth = Auth::user();
 
-        $statuses = $auth->role['name'] === 'operator'
+        $statuses = $auth->role['name'] === 'operator' || $auth->role['name'] === 'supervisor'
             ? [OrderItemStatus::DRAFT->value]
             : [
                 OrderItemStatus::DRAFT->value,
